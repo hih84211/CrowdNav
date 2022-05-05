@@ -53,7 +53,7 @@ class ValueNetwork(nn.Module):
         weights = (scores_exp / torch.sum(scores_exp, dim=1, keepdim=True)).unsqueeze(2)
         self.attention_weights = weights[0, :, 0].data.cpu().numpy()
 
-        # output feature is a linear combination of input features
+        # output_sarl feature is a linear combination of input features
         features = mlp2_output.view(size[0], size[1], -1)
         # for converting to onnx
         # expanded_weights = torch.cat([torch.zeros(weights.size()).copy_(weights) for _ in range(50)], dim=2)

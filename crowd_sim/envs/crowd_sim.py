@@ -102,7 +102,7 @@ class CrowdSim(gym.Env):
                 self.humans.append(self.generate_circle_crossing_human())
         elif rule == 'mixed':
             # mix different raining simulation with certain distribution
-            static_human_num = {0: 0.05, 1: 0.2, 2: 0.2, 3: 0.3, 4: 0.1, 5: 0.15}
+            static_human_num = {1: 0.2, 2: 0.2, 3: 0.3, 4: 0.1, 5: 0.2}
             dynamic_human_num = {1: 0.3, 2: 0.3, 3: 0.2, 4: 0.1, 5: 0.1}
             static = True if np.random.random() < 0.2 else False
             prob = np.random.random()

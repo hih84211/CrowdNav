@@ -2,6 +2,9 @@ import logging
 import copy
 import torch
 from crowd_sim.envs.utils.info import *
+import os
+
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
 class Explorer(object):
@@ -33,7 +36,7 @@ class Explorer(object):
         collision_cases = []
         timeout_cases = []
         for i in range(k):
-            ob = self.env.reset(phase)
+            ob = self.env.reset(phase=phase)
             done = False
             states = []
             actions = []

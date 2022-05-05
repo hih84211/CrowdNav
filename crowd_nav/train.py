@@ -14,18 +14,26 @@ from crowd_nav.utils.explorer import Explorer
 from crowd_nav.policy.policy_factory import policy_factory
 
 
-def main():
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+
     parser = argparse.ArgumentParser('Parse configuration file')
-    parser.add_argument('--env_config', type=str, default='configs/env.config')
-    parser.add_argument('--policy', type=str, default='cadrl')
-    parser.add_argument('--policy_config', type=str, default='configs/policy.config')
-    parser.add_argument('--train_config', type=str, default='configs/train.config')
-    parser.add_argument('--output_dir', type=str, default='data/output')
+    parser.add_argument('--policy', type=str, default='sarl',
+                        help='The kind of policy to train, e.g. sarl, lstm_rl, cadrl')
+    parser.add_argument('--env_config', type=str, default='configs/env.config',
+                        help='Directory of the environment configuration file')
+    parser.add_argument('--policy_config', type=str, default='configs/policy.config',
+                        help='Directory of the policy configuration file')
+    parser.add_argument('--train_config', type=str, default='configs/train.config',
+                        help='Directory of the training configuration file')
+    parser.add_argument('--output_dir', type=str, default='data/output_sarl',
+                        help='Directory to store the trained model weights')
     parser.add_argument('--weights', type=str)
     parser.add_argument('--resume', default=False, action='store_true')
     parser.add_argument('--gpu', default=False, action='store_true')
     parser.add_argument('--debug', default=False, action='store_true')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # configure paths
     make_new_dir = True
@@ -43,7 +51,7 @@ def main():
         shutil.copy(args.env_config, args.output_dir)
         shutil.copy(args.policy_config, args.output_dir)
         shutil.copy(args.train_config, args.output_dir)
-    log_file = os.path.join(args.output_dir, 'output.log')
+    log_file = os.path.join(args.output_dir, 'output_sarl.log')
     il_weight_file = os.path.join(args.output_dir, 'il_model.pth')
     rl_weight_file = os.path.join(args.output_dir, 'rl_model.pth')
 
@@ -174,4 +182,17 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    """
+    Arguments
+    --env_config: type=str, default='configs/env.config'
+    --policy: type=str, default='sarl', e.g. cadrl, sarl, lstm_rl,
+    --policy_config: type=str, default='configs/policy.config'
+    --train_config: type=str, default='configs/train.config'
+    --output_dir: type=str, default='data/output2'
+    --weights: type=str
+    --resume: default=False, action='store_true'
+    --gpu: default=False, action='store_true'
+    --debug: default=False, action='store_true'
+    """
+
+    main(['--policy', 'sarl', '--output_dir', 'data/output_sarl', '--debug', '--resume'])

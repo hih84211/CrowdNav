@@ -35,7 +35,7 @@ class Policy(object):
     @abc.abstractmethod
     def predict(self, state):
         """
-        Policy takes state as input and output an action
+        Policy takes state as input and output_sarl an action
 
         """
         return
