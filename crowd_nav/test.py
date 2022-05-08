@@ -1,3 +1,4 @@
+import sys
 import logging
 import argparse
 import configparser
@@ -11,7 +12,9 @@ from crowd_sim.envs.utils.robot import Robot
 from crowd_sim.envs.policy.orca import ORCA
 
 
-def main():
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     parser = argparse.ArgumentParser('Parse configuration file')
     parser.add_argument('--env_config', type=str, default='configs/env.config')
     parser.add_argument('--policy_config', type=str, default='configs/policy.config')
@@ -26,7 +29,7 @@ def main():
     parser.add_argument('--circle', default=False, action='store_true')
     parser.add_argument('--video_file', type=str, default=None)
     parser.add_argument('--traj', default=False, action='store_true')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.model_dir is not None:
         env_config_file = os.path.join(args.model_dir, os.path.basename(args.env_config))
@@ -110,4 +113,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(['--policy', 'sarl', '--model_dir', 'data/output_sarl', '--phase', 'test', '--visualize', '--test_case', '0'])
+    # main()

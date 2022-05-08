@@ -85,5 +85,9 @@ class SARL(MultiHumanRL):
             self.name = 'OM-SARL'
         logging.info('Policy: {} {} global state'.format(self.name, 'w/' if with_global_state else 'w/o'))
 
+    '''def predict(self, state):
+        # print('Predicted!!!!!!!!!!')
+        return super().predict(state)'''
+
     def get_attention_weights(self):
         return self.model.attention_weights

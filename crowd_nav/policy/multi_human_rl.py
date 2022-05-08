@@ -94,6 +94,10 @@ class MultiHumanRL(CADRL):
         :param state:
         :return: tensor of shape (# of humans, len(state))
         """
+        # self_position: (px, py), self_velocity: (vx, vy), self_radius: r,
+        # goal_position: (gx, gy), theta: heading direction
+        # human_state: [px, py, vx, vy, r]
+        # robot_state: [px, py, vx, vy, r, gx, gy, theta, v_pref]
         state_tensor = torch.cat([torch.Tensor([state.self_state + human_state]).to(self.device)
                                   for human_state in state.human_states], dim=0)
         if self.with_om:
@@ -101,6 +105,9 @@ class MultiHumanRL(CADRL):
             state_tensor = torch.cat([self.rotate(state_tensor), occupancy_maps.to(self.device)], dim=1)
         else:
             state_tensor = self.rotate(state_tensor)
+            # self.rotate(state) will transform the state from global coord to robot-centric coord
+            # state_tensor for human i: [dg, v_pref, vx, vy, r,
+            #                            pix, piy, vix, viy, ri, di, ri+r]
         return state_tensor
 
     def input_dim(self):
