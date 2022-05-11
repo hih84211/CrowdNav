@@ -23,7 +23,7 @@ class ValueNetwork1(nn.Module):
         """
         size = state.shape
         self_state = state[:, 0, :self.self_state_dim]
-        # human_state = state[:, :, self.self_state_dim:]
+        # human_state = state[:, :, self.state_dim:]
         h0 = torch.zeros(1, size[0], self.lstm_hidden_dim)
         c0 = torch.zeros(1, size[0], self.lstm_hidden_dim)
         output, (hn, cn) = self.lstm(state, (h0, c0))

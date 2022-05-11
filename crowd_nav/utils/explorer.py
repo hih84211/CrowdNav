@@ -2,13 +2,14 @@ import logging
 import copy
 import torch
 from crowd_sim.envs.utils.info import *
+from crowd_sim.envs.utils.state import JointState
 import os
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
 class Explorer(object):
-    def __init__(self, env, robot, device, memory=None, gamma=None, target_policy=None):
+    def __init__(self, env, robot, device, memory=None, gamma=None, target_policy=None, is_q=False):
         self.env = env
         self.robot = robot
         self.device = device
@@ -16,6 +17,7 @@ class Explorer(object):
         self.gamma = gamma
         self.target_policy = target_policy
         self.target_model = None
+        self.q_learn = is_q
 
     def update_target_model(self, target_model):
         self.target_model = copy.deepcopy(target_model)
@@ -41,12 +43,17 @@ class Explorer(object):
             states = []
             actions = []
             rewards = []
+            next_states = []
             while not done:
                 action = self.robot.act(ob)
                 ob, reward, done, info = self.env.step(action)
                 states.append(self.robot.policy.last_state)
                 actions.append(action)
                 rewards.append(reward)
+                if self.q_learn:
+                    next_state = JointState(self.robot.get_full_state(), ob)
+                    next_state = self.target_policy.transform(next_state)
+                    next_states.append(next_state)
 
                 if isinstance(info, Danger):
                     too_close += 1
@@ -69,7 +76,7 @@ class Explorer(object):
             if update_memory:
                 if isinstance(info, ReachGoal) or isinstance(info, Collision):
                     # only add positive(success) or negative(collision) experience in experience set
-                    self.update_memory(states, actions, rewards, imitation_learning)
+                    self.update_memory(states, actions, rewards, imitation_learning, next_states)
 
             cumulative_rewards.append(sum([pow(self.gamma, t * self.robot.time_step * self.robot.v_pref)
                                            * reward for t, reward in enumerate(rewards)]))
@@ -92,7 +99,7 @@ class Explorer(object):
             logging.info('Collision cases: ' + ' '.join([str(x) for x in collision_cases]))
             logging.info('Timeout cases: ' + ' '.join([str(x) for x in timeout_cases]))
 
-    def update_memory(self, states, actions, rewards, imitation_learning=False):
+    def update_memory(self, states, actions, rewards, imitation_learning=False, next_states=None):
         if self.memory is None or self.gamma is None:
             raise ValueError('Memory or gamma value is not set!')
 
@@ -104,8 +111,13 @@ class Explorer(object):
                 # define the value of states in IL as cumulative discounted rewards, which is the same in RL
                 state = self.target_policy.transform(state)
                 # value = pow(self.gamma, (len(states) - 1 - i) * self.robot.time_step * self.robot.v_pref)
-                value = sum([pow(self.gamma, max(t - i, 0) * self.robot.time_step * self.robot.v_pref) * reward
-                             * (1 if t >= i else 0) for t, reward in enumerate(rewards)])
+                if not self.q_learn:
+                    value = sum([pow(self.gamma, max(t - i, 0) * self.robot.time_step * self.robot.v_pref) *
+                                 reward * (1 if t >= i else 0)
+                                 for t, reward in enumerate(rewards)])
+                else:
+                    pass
+
             else:
                 if i == len(states) - 1:
                     # terminal state
