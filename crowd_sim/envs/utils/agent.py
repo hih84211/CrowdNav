@@ -57,8 +57,8 @@ class Agent(object):
             self.v_pref = v_pref
         if multi_goals:
             self.current_goal = 0
-            self.gx = np.array(gx)
-            self.gy = np.array(gy)
+            self.gx = gx
+            self.gy = gy
         else:
             self.gx = gx
             self.gy = gy
@@ -81,9 +81,11 @@ class Agent(object):
 
     def get_full_state(self):
         if self.multi_goals:
-            return FullState(self.px, self.py, self.vx, self.vy, self.radius,
-                             self.gx[self.current_goal], self.gy[self.current_goal], self.v_pref, self.theta)
-        return FullState(self.px, self.py, self.vx, self.vy, self.radius, self.gx, self.gy, self.v_pref, self.theta)
+            f_s = FullState(self.px, self.py, self.vx, self.vy, self.radius,
+                            self.gx[self.current_goal], self.gy[self.current_goal], self.v_pref, self.theta)
+            return f_s
+        else:
+            return FullState(self.px, self.py, self.vx, self.vy, self.radius, self.gx, self.gy, self.v_pref, self.theta)
 
     def get_position(self):
         return self.px, self.py

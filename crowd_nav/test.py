@@ -50,7 +50,6 @@ def main(argv=None):
                         datefmt="%Y-%m-%d %H:%M:%S")
     device = torch.device("cuda:0" if torch.cuda.is_available() and args.gpu else "cpu")
     logging.info('Using device: %s', device)
-
     # configure policy
     policy = policy_factory[args.policy]()
     policy_config = configparser.RawConfigParser()
