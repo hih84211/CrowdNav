@@ -71,6 +71,8 @@ class SARL(MultiHumanRL):
         self.name = 'SARL'
 
     def configure(self, config):
+        # set up self parameters: gamma, kinematics, sampling, speed_samples,
+        # rotation_samples, query_env, cell_size, om_channel_size
         self.set_common_parameters(config)
         mlp1_dims = [int(x) for x in config.get('sarl', 'mlp1_dims').split(', ')]
         mlp2_dims = [int(x) for x in config.get('sarl', 'mlp2_dims').split(', ')]

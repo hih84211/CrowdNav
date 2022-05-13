@@ -120,6 +120,7 @@ class ORCA(Policy):
         # perturb_vel = np.array((np.cos(perturb_angle), np.sin(perturb_angle))) * perturb_dist
         # pref_vel += perturb_vel
 
+        print('perf_vel: ', pref_vel)
         self.sim.setAgentPrefVelocity(0, tuple(pref_vel))
         for i, human_state in enumerate(state.human_states):
             # unknown goal position of other humans

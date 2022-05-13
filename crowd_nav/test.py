@@ -16,7 +16,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
     parser = argparse.ArgumentParser('Parse configuration file')
-    parser.add_argument('--env_config', type=str, default='configs/env.config')
+    parser.add_argument('--env_config', type=str, default='configs/env_modified.config')
     parser.add_argument('--policy_config', type=str, default='configs/policy.config')
     parser.add_argument('--policy', type=str, default='orca')
     parser.add_argument('--model_dir', type=str, default=None)
@@ -113,5 +113,6 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    main(['--policy', 'sarl', '--model_dir', 'data/output_sarl', '--phase', 'test', '--visualize', '--test_case', '0'])
+    main(['--policy', 'sarl', '--model_dir', 'data/sarl_unicycle', '--phase', 'test', '--visualize',
+          '--env_config', 'configs/env.config', '--test_case', '0'])
     # main()

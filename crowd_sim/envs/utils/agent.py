@@ -44,18 +44,24 @@ class Agent(object):
         self.v_pref = np.random.uniform(0.5, 1.5)
         self.radius = np.random.uniform(0.3, 0.5)
 
-    def set(self, px, py, gx, gy, vx, vy, theta, radius=None, v_pref=None):
+    def set(self, px, py, gx, gy, vx, vy, theta, radius=None, v_pref=None, multi_goals=False):
         self.px = px
         self.py = py
-        self.gx = gx
-        self.gy = gy
         self.vx = vx
         self.vy = vy
         self.theta = theta
+        self.multi_goals = multi_goals
         if radius is not None:
             self.radius = radius
         if v_pref is not None:
             self.v_pref = v_pref
+        if multi_goals:
+            self.current_goal = 0
+            self.gx = np.array(gx)
+            self.gy = np.array(gy)
+        else:
+            self.gx = gx
+            self.gy = gy
 
     def get_observable_state(self):
         return ObservableState(self.px, self.py, self.vx, self.vy, self.radius)
@@ -74,6 +80,9 @@ class Agent(object):
         return ObservableState(next_px, next_py, next_vx, next_vy, self.radius)
 
     def get_full_state(self):
+        if self.multi_goals:
+            return FullState(self.px, self.py, self.vx, self.vy, self.radius,
+                             self.gx[self.current_goal], self.gy[self.current_goal], self.v_pref, self.theta)
         return FullState(self.px, self.py, self.vx, self.vy, self.radius, self.gx, self.gy, self.v_pref, self.theta)
 
     def get_position(self):
@@ -84,7 +93,10 @@ class Agent(object):
         self.py = position[1]
 
     def get_goal_position(self):
-        return self.gx, self.gy
+        if self.multi_goals:
+            return self.gx[self.current_goal], self.gy[self.current_goal]
+        else:
+            return self.gx, self.gy
 
     def get_velocity(self):
         return self.vx, self.vy
@@ -135,5 +147,12 @@ class Agent(object):
             self.vy = action.v * np.sin(self.theta)
 
     def reached_destination(self):
+        if self.multi_goals:
+            if norm(np.array(self.get_position()) - np.array(self.get_goal_position())) < self.radius:
+                if self.current_goal < len(self.gx)-1:
+                    self.current_goal += 1
+                    return False
+                else:
+                    return True
         return norm(np.array(self.get_position()) - np.array(self.get_goal_position())) < self.radius
 

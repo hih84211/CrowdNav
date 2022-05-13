@@ -21,7 +21,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser('Parse configuration file')
     parser.add_argument('--policy', type=str, default='sarl',
                         help='The kind of policy to train, e.g. sarl, lstm_rl, cadrl')
-    parser.add_argument('--env_config', type=str, default='configs/env.config',
+    parser.add_argument('--env_config', type=str, default='configs/env_modified.config',
                         help='Directory of the environment configuration file')
     parser.add_argument('--policy_config', type=str, default='configs/policy.config',
                         help='Directory of the policy configuration file')
@@ -184,7 +184,7 @@ def main(argv=None):
 if __name__ == '__main__':
     """
     Arguments
-    --env_config: type=str, default='configs/env.config'
+    --env_config: type=str, default='configs/env_modified.config'
     --policy: type=str, default='sarl', e.g. cadrl, sarl, lstm_rl,
     --policy_config: type=str, default='configs/policy.config'
     --train_config: type=str, default='configs/train.config'
@@ -195,4 +195,5 @@ if __name__ == '__main__':
     --debug: default=False, action='store_true'
     """
 
-    main(['--policy', 'sarl', '--output_dir', 'data/output_sarl', '--debug', '--resume'])
+    main(['--policy', 'sarl', '--output_dir', 'data/sarl_unicycle', '--debug', '--resume',
+          '--env_config', 'configs/env.config'])

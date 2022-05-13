@@ -26,26 +26,44 @@ class QNetwork(nn.Module):
         # state: Tensor(1, 8, 13)
         state = state.view(1, -1)  # shape: (1, 104)
 
+
 class QLearning(MultiHumanRL):
     def __init__(self):
         super().__init__()
         self.name = 'QLearning'
 
-    def build_occupancy_maps(self, state):
+    def configure(self, config):
+        # set up self parameters: gamma, kinematics, sampling, speed_samples,
+        # rotation_samples, query_env, cell_size, om_channel_size
+        self.set_common_parameters(config)
+        mlp1_dims = [int(x) for x in config.get('sarl', 'mlp1_dims').split(', ')]
+        mlp2_dims = [int(x) for x in config.get('sarl', 'mlp2_dims').split(', ')]
+        mlp3_dims = [int(x) for x in config.get('sarl', 'mlp3_dims').split(', ')]
+        attention_dims = [int(x) for x in config.get('sarl', 'attention_dims').split(', ')]
+        self.with_om = config.getboolean('sarl', 'with_om')
+        with_global_state = config.getboolean('sarl', 'with_global_state')
+        self.model = QNetwork(self.input_dim(), self.self_state_dim, mlp1_dims, mlp2_dims, mlp3_dims,
+                                  attention_dims, with_global_state, self.cell_size, self.cell_num)
+        self.multiagent_training = config.getboolean('sarl', 'multiagent_training')
+        if self.with_om:
+            self.name = 'OM-SARL'
+        logging.info('Policy: {} {} global state'.format(self.name, 'w/' if with_global_state else 'w/o'))
+
+    def build_occupancy_map(self, state):
         """
 
-        :param human_states:
-        :return: tensor of shape (# human - 1, self.cell_num ** 2)
+        :param joint_state:
+        :return: tensor of shape (self.cell_num ** 2)
         """
         human_states = state.human_states
         self_state = state.self_state
-        occupancy_maps = []
         humans = np.concatenate([np.array([(human.px, human.py, human.vx, human.vy)])
                                  for human in human_states], axis=0)
-        self_px = humans[:, 0] - human.px
-        self_py = humans[:, 1] - human.py
+        self_px = humans[:, 0] - self_state.px
+        self_py = humans[:, 1] - self_state.py
+
         # new x-axis is in the direction of human's velocity
-        human_velocity_angle = np.arctan2(human.vy, human.vx)
+        human_velocity_angle = np.arctan2(self_state.vy, self_state.vx)
         other_human_orientation = np.arctan2(self_py, self_px)
         rotation = other_human_orientation - human_velocity_angle
         distance = np.linalg.norm([self_px, self_py], axis=0)
@@ -62,7 +80,7 @@ class QLearning(MultiHumanRL):
         grid_indices = self.cell_num * other_y_index + other_x_index
         occupancy_map = np.isin(range(self.cell_num ** 2), grid_indices)
         if self.om_channel_size == 1:
-            occupancy_maps.append([occupancy_map.astype(int)])
+            return torch.from_numpy(occupancy_map.astype(int))
         else:
             # calculate relative velocity for other agents
             other_human_velocity_angles = np.arctan2(humans[:, 3], humans[:, 2])
@@ -84,7 +102,67 @@ class QLearning(MultiHumanRL):
                         raise NotImplementedError
             for i, cell in enumerate(dm):
                 dm[i] = sum(dm[i]) / len(dm[i]) if len(dm[i]) != 0 else 0
-            occupancy_maps.append([dm])
+            return torch.from_numpy(dm).float()
 
-        return torch.from_numpy(np.concatenate(occupancy_maps, axis=0)).float()
+    def transform(self, state):
+        """
+        Take the state passed from agent and transform it to the input of value network
+
+        :param state:
+        :return: tensor of shape (# of humans, len(state))
+        """
+        # self_position: (px, py), self_velocity: (vx, vy), self_radius: r,
+        # goal_position: (gx, gy), theta: heading direction
+        # human_state: [px, py, vx, vy, r]
+        # robot_state: [px, py, vx, vy, r, gx, gy, theta, v_pref]
+        state_tensor = torch.cat([torch.Tensor([state.self_state + human_state]).to(self.device)
+                                  for human_state in state.human_states], dim=0)
+        if self.with_om:
+            occupancy_maps = self.build_occupancy_maps(state.human_states)
+            state_tensor = torch.cat([self.rotate(state_tensor), occupancy_maps.to(self.device)], dim=1)
+        else:
+            state_tensor = self.rotate(state_tensor)
+            # self.rotate(state) will transform the state from global coord to robot-centric coord
+            # state_tensor for human i: [dg, v_pref, vx, vy, r,
+            #                            pix, piy, vix, viy, ri, di, ri+r]
+        return state_tensor
+
+    def rotate(self, state):
+        # from cadrl.py
+        # can be removed
+        """
+        Transform the coordinate to agent-centric.
+        Input state tensor is of size (batch_size, state_length)
+
+        """
+        # 'px', 'py', 'vx', 'vy', 'radius', 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1'
+        #  0     1      2     3      4        5     6      7         8       9     10      11     12       13
+        batch = state.shape[0]
+        dx = (state[:, 5] - state[:, 0]).reshape((batch, -1))
+        dy = (state[:, 6] - state[:, 1]).reshape((batch, -1))
+        rot = torch.atan2(state[:, 6] - state[:, 1], state[:, 5] - state[:, 0])
+
+        dg = torch.norm(torch.cat([dx, dy], dim=1), 2, dim=1, keepdim=True)
+        v_pref = state[:, 7].reshape((batch, -1))
+        vx = (state[:, 2] * torch.cos(rot) + state[:, 3] * torch.sin(rot)).reshape((batch, -1))
+        vy = (state[:, 3] * torch.cos(rot) - state[:, 2] * torch.sin(rot)).reshape((batch, -1))
+
+        radius = state[:, 4].reshape((batch, -1))
+        if self.kinematics == 'unicycle':
+            theta = (state[:, 8] - rot).reshape((batch, -1))
+        else:
+            # set theta to be zero since it's not used
+            theta = torch.zeros_like(v_pref)
+        vx1 = (state[:, 11] * torch.cos(rot) + state[:, 12] * torch.sin(rot)).reshape((batch, -1))
+        vy1 = (state[:, 12] * torch.cos(rot) - state[:, 11] * torch.sin(rot)).reshape((batch, -1))
+        px1 = (state[:, 9] - state[:, 0]) * torch.cos(rot) + (state[:, 10] - state[:, 1]) * torch.sin(rot)
+        px1 = px1.reshape((batch, -1))
+        py1 = (state[:, 10] - state[:, 1]) * torch.cos(rot) - (state[:, 9] - state[:, 0]) * torch.sin(rot)
+        py1 = py1.reshape((batch, -1))
+        radius1 = state[:, 13].reshape((batch, -1))
+        radius_sum = radius + radius1
+        da = torch.norm(torch.cat([(state[:, 0] - state[:, 9]).reshape((batch, -1)), (state[:, 1] - state[:, 10]).
+                                  reshape((batch, -1))], dim=1), 2, dim=1, keepdim=True)
+        new_state = torch.cat([dg, v_pref, theta, radius, vx, vy, px1, py1, vx1, vy1, radius1, da, radius_sum], dim=1)
+        return new_state
 

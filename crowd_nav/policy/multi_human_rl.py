@@ -119,6 +119,9 @@ class MultiHumanRL(CADRL):
         :param human_states:
         :return: tensor of shape (# human - 1, self.cell_num ** 2)
         """
+        # import numpy as np
+        # import pytorch
+
         occupancy_maps = []
         for human in human_states:
             other_humans = np.concatenate([np.array([(other_human.px, other_human.py, other_human.vx, other_human.vy)])

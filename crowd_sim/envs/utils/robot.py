@@ -5,6 +5,7 @@ from crowd_sim.envs.utils.state import JointState
 class Robot(Agent):
     def __init__(self, config, section):
         super().__init__(config, section)
+        self.type = 'robot'
 
     def act(self, ob):
         if self.policy is None:

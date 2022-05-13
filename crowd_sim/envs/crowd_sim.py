@@ -47,6 +47,7 @@ class CrowdSim(gym.Env):
         self.states = None
         self.action_values = None
         self.attention_weights = None
+        self.current_goal = 0
 
     def configure(self, config):
         self.config = config
@@ -172,7 +173,7 @@ class CrowdSim(gym.Env):
                     break
             if not collide:
                 break
-        human.set(px, py, -px, -py, 0, 0, 0)
+        human.set(px, py, np.array([-px, px]), np.array([-py, py]), 0, 0, 0, multi_goals=True)
         return human
 
     def generate_square_crossing_human(self):
@@ -194,16 +195,23 @@ class CrowdSim(gym.Env):
             if not collide:
                 break
         while True:
-            gx = np.random.random() * self.square_width * 0.5 * -sign
-            gy = (np.random.random() - 0.5) * self.square_width
+            gx = np.random.random((1, 2)) * self.square_width * 0.5 * -sign
+            gy = (np.random.random((1, 2)) - 0.5) * self.square_width
             collide = False
-            for agent in [self.robot] + self.humans:
-                if norm((gx - agent.gx, gy - agent.gy)) < human.radius + agent.radius + self.discomfort_dist:
-                    collide = True
-                    break
+            for agent in self.humans:
+                human.radius + agent.radius + self.discomfort_dist
+                for i in range(len(gx)):
+                    if norm((gx[i] - agent.gx[i], gy[i] - agent.gy[i])) < human.radius + agent.radius + self.discomfort_dist:
+                        collide = True
+                        break
+            for robot in [self.robot]:
+                for i in range(len(gx)):
+                    if norm((gx[i] - robot.gx, gy[i] - robot.gy)) < human.radius + robot.radius + self.discomfort_dist:
+                        collide = True
+                        break
             if not collide:
                 break
-        human.set(px, py, gx, gy, 0, 0, 0)
+        human.set(px, py, gx, gy, 0, 0, 0, multi_goals=True)
         return human
 
     def get_human_times(self):
