@@ -17,7 +17,6 @@ from crowd_nav.policy.policy_factory import policy_factory
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-
     parser = argparse.ArgumentParser('Parse configuration file')
     parser.add_argument('--policy', type=str, default='sarl',
                         help='The kind of policy to train, e.g. sarl, lstm_rl, cadrl')
@@ -194,6 +193,16 @@ if __name__ == '__main__':
     --gpu: default=False, action='store_true'
     --debug: default=False, action='store_true'
     """
+    sarl = ['--policy', 'sarl',
+            '--output_dir', 'data/sarl_uni_sq_om/model',
+            '--env_config', 'data/sarl_uni_sq_om/env.config',
+            '--policy_config', 'data/sarl_uni_sq_om/policy.config',
+            '--train_config', 'data/sarl_uni_sq_om/train.config',
+            '--resume']
+    q_learn = ['--policy', 'q_learn',
+               '--output_dir', 'data/q_learn/model',
+               '--env_config', 'configs/env.config',
+               '--debug']
 
-    main(['--policy', 'sarl', '--output_dir', 'data/sarl_unicycle', '--debug', '--resume',
-          '--env_config', 'configs/env.config'])
+    main(q_learn)
+

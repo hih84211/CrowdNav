@@ -112,6 +112,6 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    main(['--policy', 'sarl', '--model_dir', 'data/sarl_unicycle', '--phase', 'test', '--visualize',
-          '--env_config', 'configs/env.config', '--test_case', '0'])
+    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_om/model', '--phase', 'test', '--env_config', 'data/sarl_uni_sq_om/model/env.config',
+          '--visualize', '--test_case', '0'])
     # main()

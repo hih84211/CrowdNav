@@ -32,6 +32,7 @@ class CrowdSim(gym.Env):
         self.collision_penalty = None
         self.discomfort_dist = None
         self.discomfort_penalty_factor = None
+        self.time_step_penalty = None
         # simulation configuration
         self.config = None
         self.case_capacity = None
@@ -58,6 +59,7 @@ class CrowdSim(gym.Env):
         self.collision_penalty = config.getfloat('reward', 'collision_penalty')
         self.discomfort_dist = config.getfloat('reward', 'discomfort_dist')
         self.discomfort_penalty_factor = config.getfloat('reward', 'discomfort_penalty_factor')
+        self.time_step_penalty = config.getfloat('reward', 'time_step_penalty')
         if self.config.get('humans', 'policy') == 'orca':
             self.case_capacity = {'train': np.iinfo(np.uint32).max - 2000, 'val': 1000, 'test': 1000}
             self.case_size = {'train': np.iinfo(np.uint32).max - 2000, 'val': config.getint('env', 'val_size'),
@@ -195,13 +197,14 @@ class CrowdSim(gym.Env):
             if not collide:
                 break
         while True:
-            gx = np.random.random(2) * self.square_width * 0.5 * -sign
-            gy = (np.random.random(2) - 0.5) * self.square_width
+            goal_num = 3
+            gx = np.random.random(goal_num) * self.square_width * 0.5 * -sign
+            gy = (np.random.random(goal_num) - 0.5) * self.square_width
             collide = False
             for agent in self.humans:
-                human.radius + agent.radius + self.discomfort_dist
                 for i in range(len(gx)):
-                    if norm((gx[i] - agent.gx[i], gy[i] - agent.gy[i])) < human.radius + agent.radius + self.discomfort_dist:
+                    if norm((gx[i] - agent.gx[i], gy[i] - agent.gy[i])) < \
+                            human.radius + agent.radius + self.discomfort_dist:
                         collide = True
                         break
             for robot in [self.robot]:
@@ -281,7 +284,7 @@ class CrowdSim(gym.Env):
                               'val': 0, 'test': self.case_capacity['val']}
             self.robot.set(0, -self.circle_radius, 0, self.circle_radius, 0, 0, np.pi / 2)
             if self.case_counter[phase] >= 0:
-                np.random.seed(counter_offset[phase] + self.case_counter[phase])
+                np.random.seed(counter_offset[phase] + self.case_counter[phase] + 4)
                 if phase in ['train', 'val']:
                     human_num = self.human_num if self.robot.policy.multiagent_training else 1
                     self.generate_random_human_position(human_num=human_num, rule=self.train_val_sim)
@@ -373,6 +376,7 @@ class CrowdSim(gym.Env):
         end_position = np.array(self.robot.compute_position(action, self.time_step))
         reaching_goal = norm(end_position - np.array(self.robot.get_goal_position())) < self.robot.radius
 
+        # Experiment: time-step penalty -0.01
         if self.global_time >= self.time_limit - 1:
             reward = 0
             done = True
@@ -392,7 +396,7 @@ class CrowdSim(gym.Env):
             done = False
             info = Danger(dmin)
         else:
-            reward = 0
+            reward = self.time_step_penalty
             done = False
             info = Nothing()
 
