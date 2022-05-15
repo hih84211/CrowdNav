@@ -9,7 +9,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
 class Explorer(object):
-    def __init__(self, env, robot, device, memory=None, gamma=None, target_policy=None, is_q=False):
+    def __init__(self, env, robot, device, memory=None, gamma=None, target_policy=None, q_learn=False):
         self.env = env
         self.robot = robot
         self.device = device
@@ -17,7 +17,7 @@ class Explorer(object):
         self.gamma = gamma
         self.target_policy = target_policy
         self.target_model = None
-        self.q_learn = is_q
+        self.q_learn = q_learn
 
     def update_target_model(self, target_model):
         self.target_model = copy.deepcopy(target_model)

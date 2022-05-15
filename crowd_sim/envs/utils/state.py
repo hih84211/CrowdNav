@@ -21,6 +21,9 @@ class FullState(object):
         return ' '.join([str(x) for x in [self.px, self.py, self.vx, self.vy, self.radius, self.gx, self.gy,
                                           self.v_pref, self.theta]])
 
+    def to_list(self):
+        return [self.px, self.py, self.vx, self.vy, self.radius, self.gx, self.gy, self.v_pref, self.theta]
+
 
 class ObservableState(object):
     def __init__(self, px, py, vx, vy, radius):

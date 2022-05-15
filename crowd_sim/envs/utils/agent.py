@@ -49,6 +49,8 @@ class Agent(object):
         self.py = py
         self.vx = vx
         self.vy = vy
+        self.gx = gx
+        self.gy = gy
         self.theta = theta
         self.multi_goals = multi_goals
         if radius is not None:
@@ -57,11 +59,6 @@ class Agent(object):
             self.v_pref = v_pref
         if multi_goals:
             self.current_goal = 0
-            self.gx = gx
-            self.gy = gy
-        else:
-            self.gx = gx
-            self.gy = gy
 
     def get_observable_state(self):
         return ObservableState(self.px, self.py, self.vx, self.vy, self.radius)
