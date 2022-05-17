@@ -443,7 +443,7 @@ class CrowdSim(gym.Env):
                     reward = 0
                 else:
                     v_goal = self.robot.v_pref * (goal_vec / goal_dist)
-                    reward = (np.dot(v_current, v_goal) / v_scal * norm(v_goal)) * self.similar_reward_factor
+                    reward = (np.dot(v_current, v_goal) / v_scal * self.robot.v_pref) * self.similar_reward_factor
             else:
                 reward = self.time_step_penalty
             done = False
