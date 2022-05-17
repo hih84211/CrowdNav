@@ -210,5 +210,6 @@ if __name__ == '__main__':
               '--policy_config', 'data/h_sarl/policy.config',
               '--train_config', 'data/h_sarl/train.config']
 
+    # main(['--policy', 'sarl'])
     main(h_sarl)
 

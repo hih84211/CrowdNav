@@ -440,7 +440,7 @@ class CrowdSim(gym.Env):
                 v_current = np.array(self.robot.get_velocity())
                 v_scal = norm(v_current)
                 if v_scal == 0:
-                    reward = 0
+                    reward = -self.similar_reward_factor
                 else:
                     v_goal = self.robot.v_pref * (goal_vec / goal_dist)
                     reward = (np.dot(v_current, v_goal) / v_scal * self.robot.v_pref) * self.similar_reward_factor
