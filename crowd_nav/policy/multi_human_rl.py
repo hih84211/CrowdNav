@@ -7,6 +7,18 @@ from crowd_nav.policy.cadrl import CADRL
 class MultiHumanRL(CADRL):
     def __init__(self):
         super().__init__()
+        self.success_reward = None
+        self.collision_penalty = None
+        self.discomfort_dist = None
+        self.discomfort_penalty_factor = None
+        self.time_step_penalty = None
+
+    def configure(self, config):
+        self.success_reward = config.getfloat('reward', 'success_reward')
+        self.collision_penalty = config.getfloat('reward', 'collision_penalty')
+        self.discomfort_dist = config.getfloat('reward', 'discomfort_dist')
+        self.discomfort_penalty_factor = config.getfloat('reward', 'discomfort_penalty_factor')
+        self.time_step_penalty = config.getfloat('reward', 'time_step_penalty')
 
     def predict(self, state):
         """
@@ -38,7 +50,7 @@ class MultiHumanRL(CADRL):
                     next_human_states, reward, done, info = self.env.onestep_lookahead(action)
                 else:
                     next_human_states = [self.propagate(human_state, ActionXY(human_state.vx, human_state.vy))
-                                       for human_state in state.human_states]
+                                         for human_state in state.human_states]
                     reward = self.compute_reward(next_self_state, next_human_states)
                 batch_next_states = torch.cat([torch.Tensor([next_self_state + next_human_state]).to(self.device)
                                               for next_human_state in next_human_states], dim=0)
@@ -77,13 +89,13 @@ class MultiHumanRL(CADRL):
         # check if reaching the goal
         reaching_goal = np.linalg.norm((nav.px - nav.gx, nav.py - nav.gy)) < nav.radius
         if collision:
-            reward = -0.25
+            reward = self.collision_penalty
         elif reaching_goal:
-            reward = 1
+            reward = self.success_reward
         elif dmin < 0.2:
-            reward = (dmin - 0.2) * 0.5 * self.time_step
+            reward = (dmin - self.discomfort_dist) * self.discomfort_penalty_factor * self.time_step
         else:
-            reward = 0
+            reward = self.time_step_penalty
 
         return reward
 

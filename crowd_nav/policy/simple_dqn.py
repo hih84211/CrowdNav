@@ -35,6 +35,7 @@ class QLearning(MultiHumanRL):
     def configure(self, config):
         # set up self parameters: gamma, kinematics, sampling, speed_samples,
         # rotation_samples, query_env, cell_size, om_channel_size
+        super().configure(config)
         self.set_common_parameters(config)
         self.model = QNetwork(self.input_dim(), self.self_state_dim, )
         self.multiagent_training = config.getboolean('sarl', 'multiagent_training')

@@ -76,7 +76,10 @@ class Explorer(object):
             if update_memory:
                 if isinstance(info, ReachGoal) or isinstance(info, Collision):
                     # only add positive(success) or negative(collision) experience in experience set
-                    self.update_memory(states, actions, rewards, imitation_learning, next_states)
+                    if not self.q_learn:
+                        self.update_memory(states, actions, rewards, imitation_learning)
+                    else:
+                        self.update_memory(states, actions, rewards, imitation_learning, next_states)
 
             cumulative_rewards.append(sum([pow(self.gamma, t * self.robot.time_step * self.robot.v_pref)
                                            * reward for t, reward in enumerate(rewards)]))
@@ -116,6 +119,7 @@ class Explorer(object):
                                  reward * (1 if t >= i else 0)
                                  for t, reward in enumerate(rewards)])
                 else:
+                    # q-value stuffing
                     pass
 
             else:

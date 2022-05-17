@@ -33,12 +33,14 @@ class CrowdSim(gym.Env):
         self.discomfort_dist = None
         self.discomfort_penalty_factor = None
         self.time_step_penalty = None
+        self.similar_reward_facto = None
         # simulation configuration
         self.config = None
         self.case_capacity = None
         self.case_size = None
         self.case_counter = None
         self.randomize_attributes = None
+        self.controller_training = None
         self.train_val_sim = None
         self.test_sim = None
         self.square_width = None
@@ -55,11 +57,14 @@ class CrowdSim(gym.Env):
         self.time_limit = config.getint('env', 'time_limit')
         self.time_step = config.getfloat('env', 'time_step')
         self.randomize_attributes = config.getboolean('env', 'randomize_attributes')
+        self.controller_training = config.getboolean('env', 'controller_training')
         self.success_reward = config.getfloat('reward', 'success_reward')
         self.collision_penalty = config.getfloat('reward', 'collision_penalty')
         self.discomfort_dist = config.getfloat('reward', 'discomfort_dist')
         self.discomfort_penalty_factor = config.getfloat('reward', 'discomfort_penalty_factor')
         self.time_step_penalty = config.getfloat('reward', 'time_step_penalty')
+        if self.controller_training:
+            self.similar_reward_factor = config.getfloat('reward', 'similar_reward_factor')
         if self.config.get('humans', 'policy') == 'orca':
             self.case_capacity = {'train': np.iinfo(np.uint32).max - 2000, 'val': 1000, 'test': 1000}
             self.case_size = {'train': np.iinfo(np.uint32).max - 2000, 'val': config.getint('env', 'val_size'),
@@ -284,7 +289,7 @@ class CrowdSim(gym.Env):
                               'val': 0, 'test': self.case_capacity['val']}
             self.robot.set(0, -self.circle_radius, 0, self.circle_radius, 0, 0, np.pi / 2)
             if self.case_counter[phase] >= 0:
-                np.random.seed(counter_offset[phase] + self.case_counter[phase] + 4)
+                np.random.seed(counter_offset[phase] + self.case_counter[phase] + 1)
                 if phase in ['train', 'val']:
                     human_num = self.human_num if self.robot.policy.multiagent_training else 1
                     self.generate_random_human_position(human_num=human_num, rule=self.train_val_sim)
@@ -374,31 +379,11 @@ class CrowdSim(gym.Env):
 
         # check if reaching the goal
         end_position = np.array(self.robot.compute_position(action, self.time_step))
-        reaching_goal = norm(end_position - np.array(self.robot.get_goal_position())) < self.robot.radius
+        goal_vec = end_position - np.array(self.robot.get_goal_position())
+        goal_dist = norm(goal_vec)
+        reaching_goal = goal_dist < self.robot.radius
 
-        # Experiment: time-step penalty -0.01
-        if self.global_time >= self.time_limit - 1:
-            reward = 0
-            done = True
-            info = Timeout()
-        elif collision:
-            reward = self.collision_penalty
-            done = True
-            info = Collision()
-        elif reaching_goal:
-            reward = self.success_reward
-            done = True
-            info = ReachGoal()
-        elif dmin < self.discomfort_dist:
-            # only penalize agent for getting too close if it's visible
-            # adjust the reward based on FPS
-            reward = (dmin - self.discomfort_dist) * self.discomfort_penalty_factor * self.time_step
-            done = False
-            info = Danger(dmin)
-        else:
-            reward = self.time_step_penalty
-            done = False
-            info = Nothing()
+        done, info, reward = self.compute_reward(collision, dmin, reaching_goal, goal_vec, goal_dist)
 
         if update:
             # store state, action value and attention weights
@@ -430,6 +415,42 @@ class CrowdSim(gym.Env):
                 raise NotImplementedError
 
         return ob, reward, done, info
+
+    def compute_reward(self, collision, dmin, reaching_goal, goal_vec, goal_dist):
+        if self.global_time >= self.time_limit - 1:
+            reward = 0
+            done = True
+            info = Timeout()
+        elif collision:
+            reward = self.collision_penalty
+            done = True
+            info = Collision()
+        elif reaching_goal:
+            reward = self.success_reward
+            done = True
+            info = ReachGoal()
+        elif dmin < self.discomfort_dist:
+            # only penalize agent for getting too close if it's visible
+            # adjust the reward based on FPS
+            reward = (dmin - self.discomfort_dist) * self.discomfort_penalty_factor * self.time_step
+            done = False
+            info = Danger(dmin)
+        else:
+            if self.controller_training:
+                v_current = np.array(self.robot.get_velocity())
+                v_scal = norm(v_current)
+                if v_scal == 0:
+                    reward = 0
+                else:
+                    v_goal = self.robot.v_pref * (goal_vec / goal_dist)
+                    reward = (np.dot(v_current, v_goal) / v_scal * norm(v_goal)) * self.similar_reward_factor
+            else:
+                reward = self.time_step_penalty
+            done = False
+            info = Nothing()
+        return done, info, reward
+
+
 
     def render(self, mode='human', output_file=None):
         from matplotlib import animation

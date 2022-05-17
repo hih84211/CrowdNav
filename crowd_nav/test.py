@@ -112,6 +112,11 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_om/model', '--phase', 'test', '--env_config', 'data/sarl_uni_sq_om/model/env.config',
-          '--visualize', '--test_case', '0'])
+    print('omf_rush test:')
+    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_omf_rush/model', '--phase', 'test', '--env_config', 'data/sarl_uni_sq_omf_rush/model/env.config'])
+          # '--visualize', '--test_case', '0'])
+    '''print()
+    print('om_rush test:')
+    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_om_rush/', '--phase', 'test', '--env_config',
+          'data/sarl_uni_sq_om_rush/env.config'])'''
     # main()

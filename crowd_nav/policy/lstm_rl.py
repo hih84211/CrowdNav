@@ -73,6 +73,7 @@ class LstmRL(MultiHumanRL):
         self.interaction_module_dims = None
 
     def configure(self, config):
+        super().configure(config)
         self.set_common_parameters(config)
         mlp_dims = [int(x) for x in config.get('lstm_rl', 'mlp2_dims').split(', ')]
         global_state_dim = config.getint('lstm_rl', 'global_state_dim')

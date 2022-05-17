@@ -20,13 +20,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser('Parse configuration file')
     parser.add_argument('--policy', type=str, default='sarl',
                         help='The kind of policy to train, e.g. sarl, lstm_rl, cadrl')
-    parser.add_argument('--env_config', type=str, default='configs/env_modified.config',
+    parser.add_argument('--env_config', type=str, default='configs/env.config',
                         help='Directory of the environment configuration file')
     parser.add_argument('--policy_config', type=str, default='configs/policy.config',
                         help='Directory of the policy configuration file')
     parser.add_argument('--train_config', type=str, default='configs/train.config',
                         help='Directory of the training configuration file')
-    parser.add_argument('--output_dir', type=str, default='data/output_sarl',
+    parser.add_argument('--output_dir', type=str, default='data/output',
                         help='Directory to store the trained model weights')
     parser.add_argument('--weights', type=str)
     parser.add_argument('--resume', default=False, action='store_true')
@@ -194,15 +194,21 @@ if __name__ == '__main__':
     --debug: default=False, action='store_true'
     """
     sarl = ['--policy', 'sarl',
-            '--output_dir', 'data/sarl_uni_sq_om/model',
-            '--env_config', 'data/sarl_uni_sq_om/env.config',
-            '--policy_config', 'data/sarl_uni_sq_om/policy.config',
-            '--train_config', 'data/sarl_uni_sq_om/train.config',
+            '--output_dir', 'data/sarl_uni_sq_omf_rush/model',
+            '--env_config', 'data/sarl_uni_sq_omf_rush/env.config',
+            '--policy_config', 'data/sarl_uni_sq_omf_rush/policy.config',
+            '--train_config', 'data/sarl_uni_sq_omf_rush/train.config',
             '--resume']
     q_learn = ['--policy', 'q_learn',
                '--output_dir', 'data/q_learn/model',
                '--env_config', 'configs/env.config',
                '--debug']
 
-    main(q_learn)
+    h_sarl = ['--policy', 'h_sarl',
+              '--output_dir', 'data/h_sarl/model',
+              '--env_config', 'data/h_sarl/env.config',
+              '--policy_config', 'data/h_sarl/policy.config',
+              '--train_config', 'data/h_sarl/train.config']
+
+    main(h_sarl)
 

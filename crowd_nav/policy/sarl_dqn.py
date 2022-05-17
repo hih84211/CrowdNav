@@ -73,6 +73,7 @@ class SARL_Q(MultiHumanRL):
         self.name = 'SARL_Q'
 
     def configure(self, config):
+        super().configure(config)
         self.set_common_parameters(config)
         mlp1_dims = [int(x) for x in config.get('sarl_q', 'mlp1_dims').split(', ')]
         mlp2_dims = [int(x) for x in config.get('sarl_q', 'mlp2_dims').split(', ')]
@@ -149,7 +150,6 @@ class SARL_Q(MultiHumanRL):
             self.last_state = self.transform(state)
 
         return max_action
-
 
     def build_occupancy_map(self, state):
         """

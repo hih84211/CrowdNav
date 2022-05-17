@@ -1,4 +1,4 @@
-# CrowdNav
+ # CrowdNav
 
 **[`Website`](https://www.epfl.ch/labs/vita/research/planning/crowd-robot-interaction/) | [`Paper`](https://arxiv.org/abs/1809.08835) | [`Video`](https://youtu.be/0sNVtQ9eqjA)**
 

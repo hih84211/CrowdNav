@@ -8,3 +8,4 @@ policy_factory['cadrl'] = CADRL
 policy_factory['lstm_rl'] = LstmRL
 policy_factory['sarl'] = SARL
 policy_factory['q_learn'] = QLearning
+policy_factory['h_sarl'] = QLearning
