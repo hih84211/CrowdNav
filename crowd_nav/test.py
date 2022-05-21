@@ -99,9 +99,11 @@ def main(argv=None):
             logging.debug('Speed: %.2f', np.linalg.norm(current_pos - last_pos) / robot.time_step)
             last_pos = current_pos
         if args.traj:
-            env.render(mode='traj', output_file=args.video_file)
+            env.render(mode='traj', output_file=args.video_file,
+                       ffmpeg_path='/opt/anaconda3/bin/ffmpeg')
         else:
-            env.render(mode='video', output_file=args.video_file)
+            env.render(mode='video', output_file=args.video_file,
+                       ffmpeg_path='/opt/homebrew/Cellar/ffmpeg/5.0.1/bin/ffmpeg')
 
         logging.info('It takes %.2f seconds to finish. Final status is %s', env.global_time, info)
         if robot.visible and info == 'reach goal':
@@ -112,11 +114,10 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    print('omf_rush test:')
-    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_omf_rush/model', '--phase', 'test', '--env_config', 'data/sarl_uni_sq_omf_rush/model/env.config'])
-          # '--visualize', '--test_case', '0'])
+    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq/model', '--phase', 'test', '--env_config', 'data/sarl_uni_sqsarl_uni_sq/model/env.config'])
+          #'--visualize', '--test_case', '0'])
     '''print()
     print('om_rush test:')
-    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_om_rush/', '--phase', 'test', '--env_config',
-          'data/sarl_uni_sq_om_rush/env.config'])'''
+    main(['--policy', 'lstm_rl', '--model_dir', 'data/h_sarl/', '--phase', 'test', '--env_config',
+          'data/h_sarl/env.config', '--visualize', '--test_case', '0'])'''
     # main()

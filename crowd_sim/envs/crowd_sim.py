@@ -65,7 +65,7 @@ class CrowdSim(gym.Env):
         self.time_step_penalty = config.getfloat('reward', 'time_step_penalty')
         if self.controller_training:
             self.similar_reward_factor = config.getfloat('reward', 'similar_reward_factor')
-        if self.config.get('humans', 'policy') == 'orca':
+        if self.config.get('humans', 'policy') == 'orca' or self.config.get('humans', 'policy') == 'linear':
             self.case_capacity = {'train': np.iinfo(np.uint32).max - 2000, 'val': 1000, 'test': 1000}
             self.case_size = {'train': np.iinfo(np.uint32).max - 2000, 'val': config.getint('env', 'val_size'),
                               'test': config.getint('env', 'test_size')}
@@ -84,7 +84,7 @@ class CrowdSim(gym.Env):
         else:
             logging.info("Not randomize human's radius and preferred speed")
         logging.info('Training simulation: {}, test simulation: {}'.format(self.train_val_sim, self.test_sim))
-        logging.info('Square width: {}, circle width: {}'.format(self.square_width, self.circle_radius))
+        logging.info('Square width: {}, circle radius: {}'.format(self.square_width, self.circle_radius))
 
     def set_robot(self, robot):
         self.robot = robot
@@ -289,7 +289,7 @@ class CrowdSim(gym.Env):
                               'val': 0, 'test': self.case_capacity['val']}
             self.robot.set(0, -self.circle_radius, 0, self.circle_radius, 0, 0, np.pi / 2)
             if self.case_counter[phase] >= 0:
-                np.random.seed(counter_offset[phase] + self.case_counter[phase] + 1)
+                np.random.seed(counter_offset[phase] + self.case_counter[phase] + 4)
                 if phase in ['train', 'val']:
                     human_num = self.human_num if self.robot.policy.multiagent_training else 1
                     self.generate_random_human_position(human_num=human_num, rule=self.train_val_sim)
@@ -379,11 +379,11 @@ class CrowdSim(gym.Env):
 
         # check if reaching the goal
         end_position = np.array(self.robot.compute_position(action, self.time_step))
-        goal_vec = end_position - np.array(self.robot.get_goal_position())
+        goal_vec = np.array(self.robot.get_goal_position()) - end_position
         goal_dist = norm(goal_vec)
         reaching_goal = goal_dist < self.robot.radius
 
-        done, info, reward = self.compute_reward(collision, dmin, reaching_goal, goal_vec, goal_dist)
+        done, info, reward = self.compute_reward(collision, dmin, reaching_goal, goal_vec, goal_dist, action)
 
         if update:
             # store state, action value and attention weights
@@ -416,7 +416,7 @@ class CrowdSim(gym.Env):
 
         return ob, reward, done, info
 
-    def compute_reward(self, collision, dmin, reaching_goal, goal_vec, goal_dist):
+    def compute_reward(self, collision, dmin, reaching_goal, goal_vec, goal_dist, action):
         if self.global_time >= self.time_limit - 1:
             reward = 0
             done = True
@@ -444,18 +444,18 @@ class CrowdSim(gym.Env):
                 else:
                     v_goal = self.robot.v_pref * (goal_vec / goal_dist)
                     reward = (np.dot(v_current, v_goal) / v_scal * self.robot.v_pref) * self.similar_reward_factor
+                    reward += self.time_step_penalty
             else:
                 reward = self.time_step_penalty
             done = False
             info = Nothing()
         return done, info, reward
 
-
-
-    def render(self, mode='human', output_file=None):
+    def render(self, mode='human', output_file=None, ffmpeg_path=None):
         from matplotlib import animation
         import matplotlib.pyplot as plt
-        plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
+        if ffmpeg_path is not None:
+            plt.rcParams['animation.ffmpeg_path'] = ffmpeg_path
 
         x_offset = 0.11
         y_offset = 0.11

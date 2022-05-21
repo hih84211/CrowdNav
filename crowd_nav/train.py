@@ -205,10 +205,16 @@ if __name__ == '__main__':
                '--debug']
 
     h_sarl = ['--policy', 'h_sarl',
-              '--output_dir', 'data/h_sarl/model',
-              '--env_config', 'data/h_sarl/env.config',
-              '--policy_config', 'data/h_sarl/policy.config',
-              '--train_config', 'data/h_sarl/train.config']
+              '--output_dir', 'data/h_sarl3/model',
+              '--env_config', 'data/h_sarl3/env.config',
+              '--policy_config', 'data/h_sarl3/policy.config',
+              '--train_config', 'data/h_sarl3/train.config']
+
+    cadrl = ['--policy', 'cadrl',
+              '--output_dir', 'data/h_sarl3/model',
+              '--env_config', 'data/h_sarl3/env.config',
+              '--policy_config', 'data/h_sarl3/policy.config',
+              '--train_config', 'data/h_sarl3/train.config']
 
     # main(['--policy', 'sarl'])
     main(h_sarl)
