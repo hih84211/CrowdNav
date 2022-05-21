@@ -1,0 +1,36 @@
+2022-05-14 01:36:46, DEBUG: Popen(['git', 'cat-file', '--batch-check'], cwd=/Users/yu-henghuang/CrowdNav, universal_newlines=False, shell=None, istream=<valid stream>)
+2022-05-14 01:36:46, INFO: Current git head hash code: %s
+2022-05-14 01:36:46, INFO: Using device: cpu
+2022-05-14 01:36:46, INFO: Policy: SARL w/ global state
+2022-05-14 01:36:46, INFO: human number: 5
+2022-05-14 01:36:46, INFO: Randomize human's radius and preferred speed
+2022-05-14 01:36:46, INFO: Training simulation: square_crossing, test simulation: circle_crossing
+2022-05-14 01:36:46, INFO: Square width: 10.0, circle width: 4.0
+2022-05-14 01:36:46, ERROR: RL weights does not exist
+2022-05-14 01:36:58, DEBUG: Popen(['git', 'cat-file', '--batch-check'], cwd=/Users/yu-henghuang/CrowdNav, universal_newlines=False, shell=None, istream=<valid stream>)
+2022-05-14 01:36:58, INFO: Current git head hash code: %s
+2022-05-14 01:36:58, INFO: Using device: cpu
+2022-05-14 01:36:58, INFO: Policy: SARL w/ global state
+2022-05-14 01:36:58, INFO: human number: 5
+2022-05-14 01:36:58, INFO: Randomize human's radius and preferred speed
+2022-05-14 01:36:58, INFO: Training simulation: square_crossing, test simulation: circle_crossing
+2022-05-14 01:36:58, INFO: Square width: 10.0, circle width: 4.0
+2022-05-14 01:36:58, ERROR: RL weights does not exist
+2022-05-14 01:37:39, DEBUG: Popen(['git', 'cat-file', '--batch-check'], cwd=/Users/yu-henghuang/CrowdNav, universal_newlines=False, shell=None, istream=<valid stream>)
+2022-05-14 01:37:39, INFO: Current git head hash code: %s
+2022-05-14 01:37:39, INFO: Using device: cpu
+2022-05-14 01:37:39, INFO: Policy: SARL w/ global state
+2022-05-14 01:37:39, INFO: human number: 5
+2022-05-14 01:37:39, INFO: Randomize human's radius and preferred speed
+2022-05-14 01:37:39, INFO: Training simulation: square_crossing, test simulation: circle_crossing
+2022-05-14 01:37:39, INFO: Square width: 10.0, circle width: 4.0
+2022-05-14 01:37:39, ERROR: RL weights does not exist
+2022-05-14 01:37:49, DEBUG: Popen(['git', 'cat-file', '--batch-check'], cwd=/Users/yu-henghuang/CrowdNav, universal_newlines=False, shell=None, istream=<valid stream>)
+2022-05-14 01:37:49, INFO: Current git head hash code: %s
+2022-05-14 01:37:49, INFO: Using device: cpu
+2022-05-14 01:37:49, INFO: Policy: SARL w/ global state
+2022-05-14 01:37:49, INFO: human number: 5
+2022-05-14 01:37:49, INFO: Randomize human's radius and preferred speed
+2022-05-14 01:37:49, INFO: Training simulation: square_crossing, test simulation: circle_crossing
+2022-05-14 01:37:49, INFO: Square width: 10.0, circle width: 4.0
+2022-05-14 01:37:49, ERROR: RL weights does not exist
