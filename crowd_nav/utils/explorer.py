@@ -74,8 +74,9 @@ class Explorer(object):
                 raise ValueError('Invalid end signal from environment')
 
             if update_memory:
-                if isinstance(info, ReachGoal) or isinstance(info, Collision):
+                if isinstance(info, ReachGoal) or isinstance(info, Collision) or isinstance(info, Timeout):
                     # only add positive(success) or negative(collision) experience in experience set
+
                     if not self.q_learn:
                         self.update_memory(states, actions, rewards, imitation_learning)
                     else:
@@ -87,7 +88,8 @@ class Explorer(object):
         success_rate = success / k
         collision_rate = collision / k
         assert success + collision + timeout == k
-        avg_nav_time = sum(success_times) / len(success_times) if success_times else self.env.time_limit
+        avg_nav_time = sum(success_times) / len(success_times) \
+            if success_times else sum(collision_times) / len(collision_times)
 
         extra_info = '' if episode is None else 'in episode {} '.format(episode)
         logging.info('{:<5} {}has success rate: {:.2f}, collision rate: {:.2f}, nav time: {:.2f}, total reward: {:.4f}'.
