@@ -88,8 +88,12 @@ class Explorer(object):
         success_rate = success / k
         collision_rate = collision / k
         assert success + collision + timeout == k
-        avg_nav_time = sum(success_times) / len(success_times) \
-            if success_times else sum(collision_times) / len(collision_times)
+        if success_times:
+            avg_nav_time = sum(success_times) / len(success_times)
+        elif collision_times:
+            avg_nav_time = sum(collision_times) / len(collision_times)
+        else:
+            avg_nav_time = self.env.time_limit
 
         extra_info = '' if episode is None else 'in episode {} '.format(episode)
         logging.info('{:<5} {}has success rate: {:.2f}, collision rate: {:.2f}, nav time: {:.2f}, total reward: {:.4f}'.
