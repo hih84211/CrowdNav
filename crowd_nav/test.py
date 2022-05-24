@@ -114,8 +114,8 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq/model', '--phase', 'test', '--env_config', 'data/sarl_uni_sqsarl_uni_sq/model/env.config'])
-          #'--visualize', '--test_case', '0'])
+    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_om/model', '--phase', 'test', '--env_config', 'data/sarl_uni_sq_om/model/env.config',
+          '--visualize', '--test_case', '0'])
     '''print()
     print('om_rush test:')
     main(['--policy', 'lstm_rl', '--model_dir', 'data/h_sarl/', '--phase', 'test', '--env_config',

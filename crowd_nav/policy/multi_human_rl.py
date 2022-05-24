@@ -12,6 +12,7 @@ class MultiHumanRL(CADRL):
         self.discomfort_dist = None
         self.discomfort_penalty_factor = None
         self.time_step_penalty = None
+        self.count = 0
 
     def configure(self, config):
         self.success_reward = config.getfloat('reward', 'success_reward')
@@ -60,7 +61,12 @@ class MultiHumanRL(CADRL):
                         occupancy_maps = self.build_occupancy_maps(next_human_states).unsqueeze(0)
                     rotated_batch_input = torch.cat([rotated_batch_input, occupancy_maps.to(self.device)], dim=2)
                 # VALUE UPDATE
-                next_state_value = self.model(rotated_batch_input).data.item()
+                next_state_value = self.model(rotated_batch_input)
+                if self.count == 0:
+                    from torchviz import make_dot
+                    make_dot(next_state_value, params=dict(list(self.model.named_parameters()))).render("om-sarl_torchviz", format="png")
+                    self.count += 1
+                next_state_value = next_state_value.data.item()
                 value = reward + pow(self.gamma, self.time_step * state.self_state.v_pref) * next_state_value
                 self.action_values.append(value)
                 if value > max_value:

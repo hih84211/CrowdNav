@@ -194,21 +194,20 @@ if __name__ == '__main__':
     --debug: default=False, action='store_true'
     """
     sarl = ['--policy', 'sarl',
-            '--output_dir', 'data/sarl_uni_sq_omf_rush/model',
-            '--env_config', 'data/sarl_uni_sq_omf_rush/env.config',
-            '--policy_config', 'data/sarl_uni_sq_omf_rush/policy.config',
-            '--train_config', 'data/sarl_uni_sq_omf_rush/train.config',
-            '--resume']
+            '--output_dir', 'data/sarl_origin/model',
+            '--env_config', 'data/sarl_origin/env.config',
+            '--policy_config', 'data/sarl_origin/policy.config',
+            '--train_config', 'data/sarl_origin/train.config']
     q_learn = ['--policy', 'q_learn',
                '--output_dir', 'data/q_learn/model',
                '--env_config', 'configs/env.config',
                '--debug']
 
     h_sarl = ['--policy', 'h_sarl',
-              '--output_dir', 'data/h_sarl3/model',
-              '--env_config', 'data/h_sarl3/env.config',
-              '--policy_config', 'data/h_sarl3/policy.config',
-              '--train_config', 'data/h_sarl3/train.config']
+              '--output_dir', 'data/h_sarl6/model',
+              '--env_config', 'data/h_sarl6/env.config',
+              '--policy_config', 'data/h_sarl6/policy.config',
+              '--train_config', 'data/h_sarl6/train.config']
 
     cadrl = ['--policy', 'cadrl',
               '--output_dir', 'data/h_sarl3/model',

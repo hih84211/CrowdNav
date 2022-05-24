@@ -429,12 +429,6 @@ class CrowdSim(gym.Env):
             reward = self.success_reward
             done = True
             info = ReachGoal()
-        elif dmin < self.discomfort_dist:
-            # only penalize agent for getting too close if it's visible
-            # adjust the reward based on FPS
-            reward = (dmin - self.discomfort_dist) * self.discomfort_penalty_factor * self.time_step
-            done = False
-            info = Danger(dmin)
         else:
             if self.controller_training:
                 v_current = np.array(self.robot.get_velocity())
@@ -443,12 +437,28 @@ class CrowdSim(gym.Env):
                     reward = -self.similar_reward_factor
                 else:
                     v_goal = self.robot.v_pref * (goal_vec / goal_dist)
-                    reward = (np.dot(v_current, v_goal) / v_scal * self.robot.v_pref) * self.similar_reward_factor
+                    reward = (np.dot(v_current, v_goal) / v_scal * self.robot.v_pref)
+                    neg = reward < 0
+                    if neg:
+                        reward *= -1
+                        reward = reward ** 2
+                        reward *= -1
+                    else:
+                        reward = reward ** 2
+                    reward *= self.similar_reward_factor
                     reward += self.time_step_penalty
             else:
                 reward = self.time_step_penalty
-            done = False
             info = Nothing()
+            if dmin < self.discomfort_dist and self.robot.visible:
+
+                # only penalize agent for getting too close if it's visible
+                # adjust the reward based on FPS
+                penalty = (dmin - self.discomfort_dist) * self.discomfort_penalty_factor * self.time_step
+                penalty = penalty * 0.1 if self.controller_training else penalty
+                reward += penalty
+                info = Danger(dmin)
+            done = False
         return done, info, reward
 
     def render(self, mode='human', output_file=None, ffmpeg_path=None):
