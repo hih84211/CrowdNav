@@ -23,7 +23,7 @@ all the physical properties of an agent, including position, velocity, orientati
 ## Policy
 Policy takes state as input and output an action. Current available policies:
 * ORCA: compute collision-free velocity under the reciprocal assumption
-* CADRL: learn a value network to predict the value of a state and during inference it predicts action for the most important human
+* CARL: learn a value network to predict the value of a state and during inference it predicts action for the most important human
 * LSTM-RL: use lstm to encode the human states into one fixed-length vector
 * SARL: use pairwise interaction module to model human-robot interaction and use self-attention to aggregate humans' information
 * OM-SARL: extend SARL by encoding intra-human interaction with a local map

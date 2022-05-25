@@ -18,14 +18,8 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
     parser = argparse.ArgumentParser('Parse configuration file')
-    parser.add_argument('--policy', type=str, default='sarl',
-                        help='The kind of policy to train, e.g. sarl, lstm_rl, cadrl')
-    parser.add_argument('--env_config', type=str, default='configs/env.config',
+    parser.add_argument('--config', type=str, default='configs/params.config',
                         help='Directory of the environment configuration file')
-    parser.add_argument('--policy_config', type=str, default='configs/policy.config',
-                        help='Directory of the policy configuration file')
-    parser.add_argument('--train_config', type=str, default='configs/train.config',
-                        help='Directory of the training configuration file')
     parser.add_argument('--output_dir', type=str, default='data/output',
                         help='Directory to store the trained model weights')
     parser.add_argument('--weights', type=str)
@@ -42,16 +36,10 @@ def main(argv=None):
             shutil.rmtree(args.output_dir)
         else:
             make_new_dir = False
-            args.env_config = os.path.join(args.output_dir, os.path.basename(args.env_config))
-            args.policy_config = os.path.join(args.output_dir, os.path.basename(args.policy_config))
-            args.train_config = os.path.join(args.output_dir, os.path.basename(args.train_config))
+            args.config = os.path.join(args.output_dir, os.path.basename(args.config))
     if make_new_dir:
         os.makedirs(args.output_dir)
-        shutil.copy(args.env_config, args.output_dir)
-        shutil.copy(args.policy_config, args.output_dir)
-        shutil.copy(args.train_config, args.output_dir)
-    log_file = os.path.join(args.output_dir, 'output_sarl.log')
-    il_weight_file = os.path.join(args.output_dir, 'il_model.pth')
+    log_file = os.path.join(args.output_dir, 'output.log')
     rl_weight_file = os.path.join(args.output_dir, 'rl_model.pth')
 
     # configure logging
@@ -66,85 +54,59 @@ def main(argv=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() and args.gpu else "cpu")
     logging.info('Using device: %s', device)
 
+    config = configparser.RawConfigParser()
+    config.read(args.config)
+
     # configure policy
-    policy = policy_factory[args.policy]()
+    policy = policy_factory['carl']()
     if not policy.trainable:
         parser.error('Policy has to be trainable')
-    if args.policy_config is None:
-        parser.error('Policy config has to be specified for a trainable network')
-    policy_config = configparser.RawConfigParser()
-    policy_config.read(args.policy_config)
-    policy.configure(policy_config)
+
     policy.set_device(device)
 
     # configure environment
-    env_config = configparser.RawConfigParser()
-    env_config.read(args.env_config)
     env = gym.make('CrowdSim-v0')
-    env.configure(env_config)
-    robot = Robot(env_config, 'robot')
+    env.configure(config)
+    robot = Robot(config, 'robot')
     env.set_robot(robot)
 
     # read training parameters
-    if args.train_config is None:
-        parser.error('Train config has to be specified for a trainable network')
-    train_config = configparser.RawConfigParser()
-    train_config.read(args.train_config)
-    rl_learning_rate = train_config.getfloat('train', 'rl_learning_rate')
-    train_batches = train_config.getint('train', 'train_batches')
-    train_episodes = train_config.getint('train', 'train_episodes')
-    sample_episodes = train_config.getint('train', 'sample_episodes')
-    target_update_interval = train_config.getint('train', 'target_update_interval')
-    evaluation_interval = train_config.getint('train', 'evaluation_interval')
-    capacity = train_config.getint('train', 'capacity')
-    epsilon_start = train_config.getfloat('train', 'epsilon_start')
-    epsilon_end = train_config.getfloat('train', 'epsilon_end')
-    epsilon_decay = train_config.getfloat('train', 'epsilon_decay')
-    checkpoint_interval = train_config.getint('train', 'checkpoint_interval')
+    learning_rate = config.getfloat('train', 'learning_rate')
+    train_batches = config.getint('train', 'train_batches')
+    train_episodes = config.getint('train', 'train_episodes')
+    sample_episodes = config.getint('train', 'sample_episodes')
+    target_update_interval = config.getint('train', 'target_update_interval')
+    evaluation_interval = config.getint('train', 'evaluation_interval')
+    capacity = config.getint('train', 'capacity')
+    epsilon_start = config.getfloat('train', 'epsilon_start')
+    epsilon_end = config.getfloat('train', 'epsilon_end')
+    epsilon_decay = config.getfloat('train', 'epsilon_decay')
+    checkpoint_interval = config.getint('train', 'checkpoint_interval')
 
     # configure trainer and explorer
     memory = ReplayMemory(capacity)
     model = policy.get_model()
-    batch_size = train_config.getint('trainer', 'batch_size')
+    batch_size = config.getint('train', 'batch_size')
     trainer = Trainer(model, memory, device, batch_size)
     explorer = Explorer(env, robot, device, memory, policy.gamma, target_policy=policy)
 
-    # imitation learning
     if args.resume:
         if not os.path.exists(rl_weight_file):
             logging.error('RL weights does not exist')
         model.load_state_dict(torch.load(rl_weight_file))
         rl_weight_file = os.path.join(args.output_dir, 'resumed_rl_model.pth')
         logging.info('Load reinforcement learning trained weights. Resume training')
-    elif os.path.exists(il_weight_file):
-        model.load_state_dict(torch.load(il_weight_file))
-        logging.info('Load imitation learning trained weights.')
-    else:
-        il_episodes = train_config.getint('imitation_learning', 'il_episodes')
-        il_policy = train_config.get('imitation_learning', 'il_policy')
-        il_epochs = train_config.getint('imitation_learning', 'il_epochs')
-        il_learning_rate = train_config.getfloat('imitation_learning', 'il_learning_rate')
-        trainer.set_learning_rate(il_learning_rate)
+
         if robot.visible:
             safety_space = 0
-        else:
-            safety_space = train_config.getfloat('imitation_learning', 'safety_space')
-        il_policy = policy_factory[il_policy]()
-        il_policy.multiagent_training = policy.multiagent_training
-        il_policy.safety_space = safety_space
-        robot.set_policy(il_policy)
-        explorer.run_k_episodes(il_episodes, 'train', update_memory=True, imitation_learning=True)
-        trainer.optimize_epoch(il_epochs)
-        torch.save(model.state_dict(), il_weight_file)
-        logging.info('Finish imitation learning. Weights saved.')
-        logging.info('Experience set size: %d/%d', len(memory), memory.capacity)
+
     explorer.update_target_model(model)
 
     # reinforcement learning
     policy.set_env(env)
     robot.set_policy(policy)
     robot.print_info()
-    trainer.set_learning_rate(rl_learning_rate)
+    trainer.set_learning_rate(learning_rate)
     # fill the memory pool with some RL experience
     if args.resume:
         robot.policy.set_epsilon(epsilon_end)
@@ -183,33 +145,18 @@ def main(argv=None):
 if __name__ == '__main__':
     """
     Arguments
-    --env_config: type=str, default='configs/env_modified.config'
-    --policy: type=str, default='sarl', e.g. cadrl, sarl, lstm_rl,
-    --policy_config: type=str, default='configs/policy.config'
-    --train_config: type=str, default='configs/train.config'
+    --config: type=str, default='configs/env_modified.config'
     --output_dir: type=str, default='data/output2'
     --weights: type=str
     --resume: default=False, action='store_true'
     --gpu: default=False, action='store_true'
     --debug: default=False, action='store_true'
     """
-    sarl = ['--policy', 'sarl',
-            '--output_dir', 'data/sarl_uni_sq_omf_rush/model',
-            '--env_config', 'data/sarl_uni_sq_omf_rush/env.config',
-            '--policy_config', 'data/sarl_uni_sq_omf_rush/policy.config',
-            '--train_config', 'data/sarl_uni_sq_omf_rush/train.config',
-            '--resume']
-    q_learn = ['--policy', 'q_learn',
-               '--output_dir', 'data/q_learn/model',
-               '--env_config', 'configs/env.config',
-               '--debug']
 
-    h_sarl = ['--policy', 'h_sarl',
-              '--output_dir', 'data/h_sarl/model',
-              '--env_config', 'data/h_sarl/env.config',
-              '--policy_config', 'data/h_sarl/policy.config',
-              '--train_config', 'data/h_sarl/train.config']
+
+    carl = ['--output_dir', 'data/model',
+            '--config', 'configs/params.config']
 
     # main(['--policy', 'sarl'])
-    main(h_sarl)
+    main(carl)
 

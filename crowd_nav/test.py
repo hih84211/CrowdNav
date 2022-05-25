@@ -16,60 +16,49 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
     parser = argparse.ArgumentParser('Parse configuration file')
-    parser.add_argument('--env_config', type=str, default='configs/env_modified.config')
-    parser.add_argument('--policy_config', type=str, default='configs/policy.config')
-    parser.add_argument('--policy', type=str, default='orca')
+    parser.add_argument('--config', type=str, default='configs/params.config')
     parser.add_argument('--model_dir', type=str, default=None)
-    parser.add_argument('--il', default=False, action='store_true')
     parser.add_argument('--gpu', default=False, action='store_true')
     parser.add_argument('--visualize', default=False, action='store_true')
     parser.add_argument('--phase', type=str, default='test')
     parser.add_argument('--test_case', type=int, default=None)
-    parser.add_argument('--square', default=False, action='store_true')
-    parser.add_argument('--circle', default=False, action='store_true')
     parser.add_argument('--video_file', type=str, default=None)
     parser.add_argument('--traj', default=False, action='store_true')
     args = parser.parse_args(argv)
 
     if args.model_dir is not None:
-        env_config_file = os.path.join(args.model_dir, os.path.basename(args.env_config))
-        policy_config_file = os.path.join(args.model_dir, os.path.basename(args.policy_config))
-        if args.il:
-            model_weights = os.path.join(args.model_dir, 'il_model.pth')
+        config_file = os.path.join(args.model_dir, os.path.basename(args.config))
+        if os.path.exists(os.path.join(args.model_dir, 'resumed_rl_model.pth')):
+            model_weights = os.path.join(args.model_dir, 'resumed_rl_model.pth')
         else:
-            if os.path.exists(os.path.join(args.model_dir, 'resumed_rl_model.pth')):
-                model_weights = os.path.join(args.model_dir, 'resumed_rl_model.pth')
-            else:
-                model_weights = os.path.join(args.model_dir, 'rl_model.pth')
+            model_weights = os.path.join(args.model_dir, 'rl_model.pth')
     else:
-        env_config_file = args.env_config
-        policy_config_file = args.env_config
+        config_file = args.config
 
     # configure logging and device
     logging.basicConfig(level=logging.INFO, format='%(asctime)s, %(levelname)s: %(message)s',
                         datefmt="%Y-%m-%d %H:%M:%S")
     device = torch.device("cuda:0" if torch.cuda.is_available() and args.gpu else "cpu")
     logging.info('Using device: %s', device)
+
+    config = configparser.RawConfigParser()
+    config.read(config_file)
     # configure policy
-    policy = policy_factory[args.policy]()
-    policy_config = configparser.RawConfigParser()
-    policy_config.read(policy_config_file)
-    policy.configure(policy_config)
+    policy = policy_factory['carl']()
+    policy.configure(config)
     if policy.trainable:
         if args.model_dir is None:
             parser.error('Trainable policy must be specified with a model weights directory')
         policy.get_model().load_state_dict(torch.load(model_weights))
 
     # configure environment
-    env_config = configparser.RawConfigParser()
-    env_config.read(env_config_file)
     env = gym.make('CrowdSim-v0')
-    env.configure(env_config)
+    env.configure(config)
     if args.square:
         env.test_sim = 'square_crossing'
     if args.circle:
         env.test_sim = 'circle_crossing'
-    robot = Robot(env_config, 'robot')
+    robot = Robot(config, 'robot')
     robot.set_policy(policy)
     env.set_robot(robot)
     explorer = Explorer(env, robot, device, gamma=0.9)
@@ -112,11 +101,6 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    print('omf_rush test:')
-    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_omf_rush/model', '--phase', 'test', '--env_config', 'data/sarl_uni_sq_omf_rush/model/env.config'])
-          # '--visualize', '--test_case', '0'])
-    '''print()
-    print('om_rush test:')
-    main(['--policy', 'sarl', '--model_dir', 'data/sarl_uni_sq_om_rush/', '--phase', 'test', '--env_config',
-          'data/sarl_uni_sq_om_rush/env.config'])'''
+    main(['--model_dir', 'data/model', '--phase', 'test', '--config', 'configs/params.config',
+          '--visualize', '--test_case', '0'])
     # main()
