@@ -59,6 +59,7 @@ def main(argv=None):
 
     # configure policy
     policy = policy_factory['carl']()
+    policy.configure(config)
     if not policy.trainable:
         parser.error('Policy has to be trainable')
 
@@ -66,6 +67,8 @@ def main(argv=None):
 
     # configure environment
     env = gym.make('CrowdSim-v0')
+
+
     env.configure(config)
     robot = Robot(config, 'robot')
     env.set_robot(robot)
@@ -154,7 +157,7 @@ if __name__ == '__main__':
     """
 
 
-    carl = ['--output_dir', 'data/model',
+    carl = ['--output_dir', 'data/model5',
             '--config', 'configs/params.config']
 
     # main(['--policy', 'sarl'])

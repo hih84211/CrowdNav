@@ -17,7 +17,6 @@ class Agent(object):
         self.v_pref = config.getfloat(section, 'v_pref')
         self.radius = config.getfloat(section, 'radius')
         self.policy = policy_factory[config.get(section, 'policy')]()
-        self.kinematics = self.policy.kinematics if self.policy is not None else None
         self.px = None
         self.py = None
         self.gx = None
@@ -28,12 +27,11 @@ class Agent(object):
         self.time_step = None
 
     def print_info(self):
-        logging.info('Agent is {} and has {} kinematic constraint'.format(
-            'visible' if self.visible else 'invisible', self.kinematics))
+        logging.info('Agent is {}'.format(
+            'visible' if self.visible else 'invisible'))
 
     def set_policy(self, policy):
         self.policy = policy
-        self.kinematics = policy.kinematics
 
     def sample_random_attributes(self):
         """
@@ -66,13 +64,10 @@ class Agent(object):
         self.check_validity(action)
         pos = self.compute_position(action, self.time_step)
         next_px, next_py = pos
-        if self.kinematics == 'holonomic':
-            next_vx = action.vx
-            next_vy = action.vy
-        else:
-            next_theta = self.theta + action.r
-            next_vx = action.v * np.cos(next_theta)
-            next_vy = action.v * np.sin(next_theta)
+
+        next_vx = action.vx
+        next_vy = action.vy
+
         return ObservableState(next_px, next_py, next_vx, next_vy, self.radius)
 
     def get_full_state(self):
@@ -112,20 +107,12 @@ class Agent(object):
         return
 
     def check_validity(self, action):
-        if self.kinematics == 'holonomic':
-            assert isinstance(action, ActionXY)
-        else:
-            assert isinstance(action, ActionRot)
+        assert isinstance(action, ActionXY)
 
     def compute_position(self, action, delta_t):
         self.check_validity(action)
-        if self.kinematics == 'holonomic':
-            px = self.px + action.vx * delta_t
-            py = self.py + action.vy * delta_t
-        else:
-            theta = self.theta + action.r
-            px = self.px + np.cos(theta) * action.v * delta_t
-            py = self.py + np.sin(theta) * action.v * delta_t
+        px = self.px + action.vx * delta_t
+        py = self.py + action.vy * delta_t
 
         return px, py
 
@@ -136,13 +123,9 @@ class Agent(object):
         self.check_validity(action)
         pos = self.compute_position(action, self.time_step)
         self.px, self.py = pos
-        if self.kinematics == 'holonomic':
-            self.vx = action.vx
-            self.vy = action.vy
-        else:
-            self.theta = (self.theta + action.r) % (2 * np.pi)
-            self.vx = action.v * np.cos(self.theta)
-            self.vy = action.v * np.sin(self.theta)
+
+        self.vx = action.vx
+        self.vy = action.vy
 
     def reached_destination(self):
         if self.multi_goals:

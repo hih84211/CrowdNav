@@ -4,7 +4,7 @@ import numpy as np
 import itertools
 import logging
 from crowd_sim.envs.policy.policy import Policy
-from crowd_sim.envs.utils.action import ActionRot, ActionXY
+from crowd_sim.envs.utils.action import ActionXY
 from crowd_sim.envs.utils.state import ObservableState, FullState
 
 
@@ -46,12 +46,13 @@ class CARL(Policy):
     def configure(self, config):
         self.set_common_parameters(config)
         mlp_dims = [int(x) for x in config.get('rl', 'mlp_dims').split(', ')]
-        self.model = ValueNetwork(self.joint_state_dim, mlp_dims)
+        human_num = 5  # Temp hard coding...
+        self.model = ValueNetwork(self.joint_state_dim * human_num, mlp_dims)
         self.multiagent_training = config.getboolean('rl', 'multiagent_training')
 
     def set_common_parameters(self, config):
         self.gamma = config.getfloat('rl', 'gamma')
-        self.sampling = config.get('action_space', 'sampling')
+        #self.sampling = config.get('action_space', 'sampling')
         self.speed_samples = config.getint('action_space', 'speed_samples')
         self.rotation_samples = config.getint('action_space', 'rotation_samples')
 
@@ -127,7 +128,9 @@ class CARL(Policy):
                 batch_next_states = torch.cat([torch.Tensor([next_self_state + next_human_state]).to(self.device)
                                               for next_human_state in ob], dim=0)
                 # Value update
-                outputs = self.model(self.rotate(batch_next_states))
+                rotated_state = self.rotate(batch_next_states)
+                rotated_state = torch.reshape(rotated_state, (-1,))
+                outputs = self.model(rotated_state)
                 min_output, min_index = torch.min(outputs, 0)
                 min_value = reward + pow(self.gamma, self.time_step * state.self_state.v_pref) * min_output.data.item()
                 self.action_values.append(min_value)
@@ -136,21 +139,28 @@ class CARL(Policy):
                     max_action = action
 
         if self.phase == 'train':
-            self.last_state = self.transform(state)
+            state = self.transform(state)
+            state = torch.reshape(state, (-1,))
+            self.last_state = state
 
         return max_action
 
     def transform(self, state):
         """
-        Take the state passed from agent and transform it to tensor for batch training
+        Take the state passed from agent and transform it to the input of value network
 
         :param state:
-        :return: tensor of shape (len(state), )
+        :return: tensor of shape (# of humans, len(state))
         """
-        assert len(state.human_states) == 1
-        state = torch.Tensor(state.self_state + state.human_states[0]).to(self.device)
-        state = self.rotate(state.unsqueeze(0)).squeeze(dim=0)
-        return state
+        # self_position: (px, py), self_velocity: (vx, vy), self_radius: r,
+        # goal_position: (gx, gy), theta: heading direction
+        # human_state: [px, py, vx, vy, r]
+        # robot_state: [px, py, vx, vy, r, gx, gy, theta, v_pref]
+        state_tensor = torch.cat([torch.Tensor([state.self_state + human_state]).to(self.device)
+                                  for human_state in state.human_states], dim=0)
+
+        state_tensor = self.rotate(state_tensor)
+        return state_tensor
 
     def rotate(self, state):
         """

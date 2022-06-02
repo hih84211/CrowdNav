@@ -42,17 +42,12 @@ class Explorer:
             states = []
             actions = []
             rewards = []
-            next_states = []
             while not done:
                 action = self.robot.act(ob)
                 ob, reward, done, info = self.env.step(action)
                 states.append(self.robot.policy.last_state)
                 actions.append(action)
                 rewards.append(reward)
-                if self.q_learn:
-                    next_state = JointState(self.robot.get_full_state(), ob)
-                    next_state = self.target_policy.transform(next_state)
-                    next_states.append(next_state)
 
                 if isinstance(info, Danger):
                     too_close += 1
@@ -73,12 +68,10 @@ class Explorer:
                 raise ValueError('Invalid end signal from environment')
 
             if update_memory:
-                if isinstance(info, ReachGoal) or isinstance(info, Collision):
+                if isinstance(info, ReachGoal) or isinstance(info, Collision) or isinstance(info, Nothing):  # EXP
                     # only add positive(success) or negative(collision) experience in experience set
-                    if not self.q_learn:
-                        self.update_memory(states, actions, rewards)
-                    else:
-                        self.update_memory(states, actions, rewards, next_states)
+
+                    self.update_memory(states, rewards)
 
             cumulative_rewards.append(sum([pow(self.gamma, t * self.robot.time_step * self.robot.v_pref)
                                            * reward for t, reward in enumerate(rewards)]))
@@ -101,7 +94,7 @@ class Explorer:
             logging.info('Collision cases: ' + ' '.join([str(x) for x in collision_cases]))
             logging.info('Timeout cases: ' + ' '.join([str(x) for x in timeout_cases]))
 
-    def update_memory(self, states, actions, rewards, next_states=None):
+    def update_memory(self, states, rewards):
         if self.memory is None or self.gamma is None:
             raise ValueError('Memory or gamma value is not set!')
 
@@ -115,7 +108,9 @@ class Explorer:
             else:
                 next_state = states[i + 1]
                 gamma_bar = pow(self.gamma, self.robot.time_step * self.robot.v_pref)
-                value = reward + gamma_bar * self.target_model(next_state.unsqueeze(0)).data.item()
+                next_val = self.target_model(next_state.unsqueeze(0))
+                next_val = next_val.data.item()
+                value = reward + gamma_bar * next_val
             value = torch.Tensor([value]).to(self.device)
 
             # # transform state of different human_num into fixed-size tensor

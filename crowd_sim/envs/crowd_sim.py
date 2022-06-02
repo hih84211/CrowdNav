@@ -65,8 +65,6 @@ class CrowdSim(gym.Env):
             self.case_capacity = {'train': np.iinfo(np.uint32).max - 2000, 'val': 1000, 'test': 1000}
             self.case_size = {'train': np.iinfo(np.uint32).max - 2000, 'val': config.getint('env', 'val_size'),
                               'test': config.getint('env', 'test_size')}
-            self.train_val_sim = config.get('sim', 'train_val_sim')
-            self.test_sim = config.get('sim', 'test_sim')
             self.square_width = config.getfloat('sim', 'square_width')
             self.human_num = config.getint('sim', 'human_num')
         else:
@@ -78,12 +76,12 @@ class CrowdSim(gym.Env):
             logging.info("Randomize human's radius and preferred speed")
         else:
             logging.info("Not randomize human's radius and preferred speed")
-        logging.info('Training simulation: {}, test simulation: {}'.format(self.train_val_sim, self.test_sim))
+
 
     def set_robot(self, robot):
         self.robot = robot
 
-    def generate_random_human_position(self, human_num, rule):
+    def generate_random_human_position(self, human_num):
         """
         Generate human position according to certain rule
         Rule square_crossing: generate start/goal position at two sides of y-axis
@@ -116,7 +114,7 @@ class CrowdSim(gym.Env):
             if not collide:
                 break
         while True:
-            goal_num = 3
+            goal_num = 4
             gx = np.random.random(goal_num) * self.square_width * 0.5 * -sign
             gy = (np.random.random(goal_num) - 0.5) * self.square_width
             collide = False
@@ -189,10 +187,8 @@ class CrowdSim(gym.Env):
         if test_case is not None:
             self.case_counter[phase] = test_case
         self.global_time = 0
-        if phase == 'test':
-            self.human_times = [0] * self.human_num
-        else:
-            self.human_times = [0]
+
+        self.human_times = [0] * self.human_num
 
         if self.config.get('humans', 'policy') == 'trajnet':
             raise NotImplementedError
@@ -204,9 +200,9 @@ class CrowdSim(gym.Env):
                 np.random.seed(counter_offset[phase] + self.case_counter[phase] + 1)
                 if phase in ['train', 'val']:
                     human_num = self.human_num if self.robot.policy.multiagent_training else 1
-                    self.generate_random_human_position(human_num=human_num, rule=self.train_val_sim)
+                    self.generate_random_human_position(human_num=human_num)
                 else:
-                    self.generate_random_human_position(human_num=self.human_num, rule=self.test_sim)
+                    self.generate_random_human_position(human_num=self.human_num)
                 # case_counter is always between 0 and case_size[phase]
                 self.case_counter[phase] = (self.case_counter[phase] + 1) % self.case_size[phase]
             else:
@@ -232,10 +228,7 @@ class CrowdSim(gym.Env):
             self.attention_weights = list()
 
         # get current observation
-        if self.robot.sensor == 'coordinates':
-            ob = [human.get_observable_state() for human in self.humans]
-        elif self.robot.sensor == 'RGB':
-            raise NotImplementedError
+        ob = [human.get_observable_state() for human in self.humans]
 
         return ob
 
@@ -294,7 +287,7 @@ class CrowdSim(gym.Env):
         goal_dist = norm(goal_vec)
         reaching_goal = goal_dist < self.robot.radius
 
-        done, info, reward = self.compute_reward(collision, dmin, reaching_goal, goal_dist, last_goal_dist, action)
+        done, info, reward = self.compute_reward(collision, dmin, reaching_goal, goal_dist, last_goal_dist)
 
         if update:
             # store state, action value and attention weights
@@ -324,7 +317,7 @@ class CrowdSim(gym.Env):
 
     def compute_reward(self, collision, dmin, reaching_goal, goal_dist, last_goal_dist):
         if self.global_time >= self.time_limit - 1:
-            reward = 0
+            reward = .0
             done = True
             info = Timeout()
         elif collision:
@@ -338,12 +331,14 @@ class CrowdSim(gym.Env):
         elif dmin < self.discomfort_dist:
             # only penalize agent for getting too close if it's visible
             # adjust the reward based on FPS
-            reward = (dmin - self.discomfort_dist) * self.discomfort_penalty_factor * self.time_step
+            reward = float((dmin - self.discomfort_dist) * self.discomfort_penalty_factor * self.time_step) * 0.1
             done = False
             info = Danger(dmin)
         else:
             if goal_dist < last_goal_dist:
                 reward = self.step_reward
+            else:
+                reward = -self.step_reward
             done = False
             info = Nothing()
         return done, info, reward
@@ -443,12 +438,6 @@ class CrowdSim(gym.Env):
             time = plt.text(-1, 5, 'Time: {}'.format(0), fontsize=16)
             ax.add_artist(time)
 
-            # compute attention scores
-            if self.attention_weights is not None:
-                attention_scores = [
-                    plt.text(-5.5, 5 - 0.5 * i, 'Human {}: {:.2f}'.format(i + 1, self.attention_weights[0][i]),
-                             fontsize=16) for i in range(len(self.humans))]
-
             # compute orientation in each step and use arrow to show the direction
             radius = self.robot.radius
             orientations = []
@@ -485,50 +474,7 @@ class CrowdSim(gym.Env):
                         ax.add_artist(arrow)
                     if self.attention_weights is not None:
                         human.set_color(str(self.attention_weights[frame_num][i]))
-                        attention_scores[i].set_text('human {}: {:.2f}'.format(i, self.attention_weights[frame_num][i]))
+                        # attention_scores[i].set_text('human {}: {:.2f}'.format(i, self.attention_weights[frame_num][i]))
 
                 time.set_text('Time: {:.2f}'.format(frame_num * self.time_step))
 
-            '''def plot_value_heatmap():
-                for agent in [self.states[global_step][0]] + self.states[global_step][1]:
-                    print(('{:.4f}, ' * 6 + '{:.4f}').format(agent.px, agent.py, agent.gx, agent.gy,
-                                                             agent.vx, agent.vy, agent.theta))
-                # when any key is pressed draw the action value plot
-                fig, axis = plt.subplots()
-                speeds = [0] + self.robot.policy.speeds
-                rotations = self.robot.policy.rotations + [np.pi * 2]
-                r, th = np.meshgrid(speeds, rotations)
-                z = np.array(self.action_values[global_step % len(self.states)][1:])
-                z = (z - np.min(z)) / (np.max(z) - np.min(z))
-                z = np.reshape(z, (16, 5))
-                polar = plt.subplot(projection="polar")
-                polar.tick_params(labelsize=16)
-                mesh = plt.pcolormesh(th, r, z, vmin=0, vmax=1)
-                plt.plot(rotations, r, color='k', ls='none')
-                plt.grid()
-                cbaxes = fig.add_axes([0.85, 0.1, 0.03, 0.8])
-                cbar = plt.colorbar(mesh, cax=cbaxes)
-                cbar.ax.tick_params(labelsize=16)
-                plt.show()
-
-            def on_click(event):
-                anim.running ^= True
-                if anim.running:
-                    anim.event_source.stop()
-                    if hasattr(self.robot.policy, 'action_values'):
-                        plot_value_heatmap()
-                else:
-                    anim.event_source.start()
-
-            fig.canvas.mpl_connect('key_press_event', on_click)
-            anim = animation.FuncAnimation(fig, update, frames=len(self.states), interval=self.time_step * 1000)
-            anim.running = True
-
-            if output_file is not None:
-                ffmpeg_writer = animation.writers['ffmpeg']
-                writer = ffmpeg_writer(fps=8, metadata=dict(artist='Me'), bitrate=1800)
-                anim.save(output_file, writer=writer)
-            else:
-                plt.show()
-        else:
-            raise NotImplementedError'''

@@ -54,10 +54,6 @@ def main(argv=None):
     # configure environment
     env = gym.make('CrowdSim-v0')
     env.configure(config)
-    if args.square:
-        env.test_sim = 'square_crossing'
-    if args.circle:
-        env.test_sim = 'circle_crossing'
     robot = Robot(config, 'robot')
     robot.set_policy(policy)
     env.set_robot(robot)

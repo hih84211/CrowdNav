@@ -22,7 +22,6 @@ class Trainer(object):
         logging.info('Current learning rate: %f', learning_rate)
         self.optimizer = optim.SGD(self.model.parameters(), lr=learning_rate, momentum=0.9)
 
-
     def optimize_batch(self, num_batches):
         if self.optimizer is None:
             raise ValueError('Learning rate is not set!')
