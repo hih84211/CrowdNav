@@ -86,7 +86,7 @@ def main(argv=None):
         if args.traj:
             env.render(mode='traj', output_file=args.video_file)
         else:
-            env.render(mode='video', output_file=args.video_file)
+            env.render(mode='video', output_file=args.video_file, ffmpeg_path='usr/bin/ffmpeg')
 
         logging.info('It takes %.2f seconds to finish. Final status is %s', env.global_time, info)
         if robot.visible and info == 'reach goal':
@@ -97,6 +97,6 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    main(['--model_dir', 'data/model', '--phase', 'test', '--config', 'configs/params.config',
+    main(['--model_dir', 'data/model5', '--phase', 'test', '--config', 'configs/params.config',
           '--visualize', '--test_case', '0'])
     # main()
