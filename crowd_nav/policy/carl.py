@@ -29,7 +29,6 @@ class CARL(Policy):
         super().__init__()
         self.name = 'CARL'
         self.trainable = True
-        self.multiagent_training = None
         self.epsilon = None
         self.gamma = None
         self.sampling = None
@@ -44,17 +43,13 @@ class CARL(Policy):
         self.joint_state_dim = self.self_state_dim + self.human_state_dim
 
     def configure(self, config):
-        self.set_common_parameters(config)
+        self.gamma = config.getfloat('rl', 'gamma')
+        # self.sampling = config.get('action_space', 'sampling')
+        self.speed_samples = config.getint('action_space', 'speed_samples')
+        self.rotation_samples = config.getint('action_space', 'rotation_samples')
         mlp_dims = [int(x) for x in config.get('rl', 'mlp_dims').split(', ')]
         human_num = 5  # Temp hard coding...
         self.model = ValueNetwork(self.joint_state_dim * human_num, mlp_dims)
-        self.multiagent_training = config.getboolean('rl', 'multiagent_training')
-
-    def set_common_parameters(self, config):
-        self.gamma = config.getfloat('rl', 'gamma')
-        #self.sampling = config.get('action_space', 'sampling')
-        self.speed_samples = config.getint('action_space', 'speed_samples')
-        self.rotation_samples = config.getint('action_space', 'rotation_samples')
 
     def set_device(self, device):
         self.device = device

@@ -12,17 +12,17 @@ def running_mean(x, n):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('log_files', type=str, nargs='+')
-    parser.add_argument('--plot_sr', default=False, action='store_true')
-    parser.add_argument('--plot_cr', default=False, action='store_true')
-    parser.add_argument('--plot_time', default=False, action='store_true')
+    parser.add_argument('--plot_sr', default=True, action='store_true')
+    parser.add_argument('--plot_cr', default=True, action='store_true')
+    parser.add_argument('--plot_time', default=True, action='store_true')
     parser.add_argument('--plot_reward', default=True, action='store_true')
     parser.add_argument('--plot_train', default=True, action='store_true')
-    parser.add_argument('--plot_val', default=False, action='store_true')
+    parser.add_argument('--plot_val', default=True, action='store_true')
     parser.add_argument('--window_size', type=int, default=200)
     args = parser.parse_args()
 
     # define the names of the models you want to plot and the longest episodes you want to show
-    models = ['LSTM-RL', 'SARL', 'OM-SARL']
+    models = ['CARL', 'LSTM-RL', 'SARL', 'OM-SARL']
     max_episodes = 10000
 
     ax1 = ax2 = ax3 = ax4 = None

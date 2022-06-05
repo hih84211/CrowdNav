@@ -97,6 +97,6 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    main(['--model_dir', 'data/model5', '--phase', 'test', '--config', 'configs/params.config',
+    main(['--model_dir', 'data/model8', '--phase', 'test', '--config', 'data/model8/params.config',
           '--visualize', '--test_case', '0'])
     # main()

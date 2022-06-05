@@ -150,16 +150,12 @@ if __name__ == '__main__':
     Arguments
     --config: type=str, default='configs/env_modified.config'
     --output_dir: type=str, default='data/output2'
-    --weights: type=str
     --resume: default=False, action='store_true'
     --gpu: default=False, action='store_true'
     --debug: default=False, action='store_true'
     """
 
-
-    carl = ['--output_dir', 'data/model5',
-            '--config', 'configs/params.config']
-
-    # main(['--policy', 'sarl'])
+    carl = ['--output_dir', 'data/model8',
+            '--config', 'data/model8/params.config']
     main(carl)
 
