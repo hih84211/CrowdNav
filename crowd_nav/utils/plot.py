@@ -23,7 +23,7 @@ def main():
 
     # define the names of the models you want to plot and the longest episodes you want to show
     models = ['CARL', 'LSTM-RL', 'SARL', 'OM-SARL']
-    max_episodes = 10000
+    max_episodes = 15000
 
     ax1 = ax2 = ax3 = ax4 = None
     ax1_legends = []
@@ -82,10 +82,10 @@ def main():
                 _, ax1 = plt.subplots()
             if args.plot_train:
                 ax1.plot(range(len(train_sr_smooth)), train_sr_smooth)
-                ax1_legends.append(models[i])
+                ax1_legends.append('training')
             if args.plot_val:
                 ax1.plot(val_episode, val_sr)
-                ax1_legends.append(models[i])
+                ax1_legends.append('validation')
 
             ax1.legend(ax1_legends)
             ax1.set_xlabel('Episodes')
@@ -98,10 +98,10 @@ def main():
                 _, ax2 = plt.subplots()
             if args.plot_train:
                 ax2.plot(range(len(train_time_smooth)), train_time_smooth)
-                ax2_legends.append(models[i])
+                ax2_legends.append('training')
             if args.plot_val:
                 ax2.plot(val_episode, val_time)
-                ax2_legends.append(models[i])
+                ax2_legends.append('validation')
 
             ax2.legend(ax2_legends)
             ax2.set_xlabel('Episodes')
@@ -114,10 +114,10 @@ def main():
                 _, ax3 = plt.subplots()
             if args.plot_train:
                 ax3.plot(range(len(train_cr_smooth)), train_cr_smooth)
-                ax3_legends.append(models[i])
+                ax3_legends.append('training')
             if args.plot_val:
                 ax3.plot(val_episode, val_cr)
-                ax3_legends.append(models[i])
+                ax3_legends.append('validation')
 
             ax3.legend(ax3_legends)
             ax3.set_xlabel('Episodes')
@@ -130,10 +130,10 @@ def main():
                 _, ax4 = plt.subplots()
             if args.plot_train:
                 ax4.plot(range(len(train_reward_smooth)), train_reward_smooth)
-                ax4_legends.append(models[i])
+                ax4_legends.append('training')
             if args.plot_val:
                 ax4.plot(val_episode, val_reward)
-                ax4_legends.append(models[i])
+                ax4_legends.append('validation')
 
             ax4.legend(ax4_legends)
             ax4.set_xlabel('Episodes')

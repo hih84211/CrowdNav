@@ -197,7 +197,7 @@ class CrowdSim(gym.Env):
                               'val': 0, 'test': self.case_capacity['val']}
             self.robot.set(0, -self.circle_radius, 0, self.circle_radius, 0, 0, np.pi / 2)
             if self.case_counter[phase] >= 0:
-                np.random.seed(counter_offset[phase] + self.case_counter[phase])
+                np.random.seed(counter_offset[phase] + self.case_counter[phase]+2)
                 if phase in ['train', 'val']:
                     human_num = self.human_num
                     self.generate_random_human_position(human_num=human_num)
