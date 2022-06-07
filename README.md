@@ -1,5 +1,7 @@
-The environment code: crowd_sim/crowd_sim.py
-The policy code: crowd_nav/policy/carl.py
+## Important files
+The environment code: crowd_sim/crowd_sim.py  
+The policy code: crowd_nav/policy/carl.py  
+The training code: crowd_nav/train.py
 ## Setup
 1. Install [Python-RVO2](https://github.com/sybrenstuvel/Python-RVO2) library
 2. Install crowd_sim and crowd_nav into pip
