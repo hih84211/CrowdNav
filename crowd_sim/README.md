@@ -14,19 +14,14 @@ observation, reward, done will be returned.
 ## Agent
 Agent is a base class, and has two derived class of human and robot. Agent class holds
 all the physical properties of an agent, including position, velocity, orientation, policy and etc.
-* visibility: humans are always visible, but robot can be set to be visible or invisible
-* sensor: can be either visual input or coordinate input
-* kinematics: can be either holonomic (move in any direction) or unicycle (has rotation constraints)
+* kinematics: holonomic (move in any direction)
 * act(observation): transform observation to state and pass it to policy
 
 
 ## Policy
 Policy takes state as input and output an action. Current available policies:
 * ORCA: compute collision-free velocity under the reciprocal assumption
-* CARL: learn a value network to predict the value of a state and during inference it predicts action for the most important human
-* LSTM-RL: use lstm to encode the human states into one fixed-length vector
-* SARL: use pairwise interaction module to model human-robot interaction and use self-attention to aggregate humans' information
-* OM-SARL: extend SARL by encoding intra-human interaction with a local map
+* CARL: learn a value network to predict the value of a state and during inference it predicts action
 
 
 ## State
@@ -40,5 +35,4 @@ the knowledge of environments is defined as JointState, and it's different from 
 
 ## Action
 There are two types of actions depending on what kinematics constraint the agent has.
-* ActionXY: (vx, vy) if kinematics == 'holonomic'
 * ActionRot: (velocity, rotation angle) if kinematics == 'unicycle'
